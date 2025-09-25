@@ -1,0 +1,60 @@
+<mat-toolbar>
+  <span>Archivos</span>
+  <span class="flex-1"></span>
+  <button mat-flat-button (click)="create()">Agregar</button>
+</mat-toolbar>
+
+<div class="flex justify-end py-2 px-4">
+  <div class="w-full sm:w-1/4 h-[54px]">
+    <mat-form-field>
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Buscar carpeta</mat-label>
+      <input matInput placeholder="Nombre" [(ngModel)]="term" />
+    </mat-form-field>
+  </div>
+</div>
+
+<div
+  restoreScroll
+  scrollKey="folders-scroll"
+  [isLoading]="isLoading()"
+  class="overflow-y-auto"
+  style="height: calc(100vh - 200px)"
+>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4">
+    <div
+      class="relative group cursor-point p-2 flex flex-col items-center rounded-2xl box-folder h-[200px]"
+      [routerLink]="'no-folder'"
+    >
+      <div class="size-32 mb-4">
+        <img src="images/icons/alert-folder.png" alt="Folder image" />
+      </div>
+
+      <div class="truncate w-full text-center font-medium">ARCHIVADOS</div>
+    </div>
+    @for (folder of filteredFolders(); track $index) {
+    <div
+      class="relative group cursor-point px-4 py-2 flex flex-col items-center rounded-2xl box-folder h-[200px]"
+      [routerLink]="[folder._id]"
+    >
+      <small class="truncate w-full text-xs mb-4">
+        Creado por: {{ folder.managerName | titlecase }}
+      </small>
+      <div class="size-24 mb-2">
+        <img src="images/icons/folder.png" alt="Folder image" />
+      </div>
+
+      <div class="w-full text-center font-medium">
+        {{ folder.name }}
+      </div>
+
+      <button
+        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+        (click)="delete(folder._id, $event)"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,104 @@
+<h2 mat-dialog-title>{{ data ? "Edicion" : "Creacion" }} Documento</h2>
+<mat-dialog-content>
+  <form [formGroup]="formDoc" class="pt-2">
+    @if(!data){
+    <div class="flex gap-x-2">
+      <div class="w-1/4">
+        <mat-form-field>
+          <mat-label>Genear cite por</mat-label>
+          <mat-select formControlName="isGeneralCode">
+            <mat-option [value]="false">AREA</mat-option>
+            <mat-option [value]="true">UNIDAD</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="flex-1">
+        <mat-form-field>
+          <mat-label>Tipo de documento</mat-label>
+          <mat-select formControlName="type">
+            @for (type of types; track $index) {
+            <mat-option [value]="type.value">{{ type.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+    }
+    <mat-form-field>
+      <mat-label>Referencia</mat-label>
+      <textarea matInput formControlName="reference"></textarea>
+    </mat-form-field>
+    <div formGroupName="sender" class="flex gap-x-2">
+      <div class="w-full">
+        <autocomplete
+          title="Remitente"
+          [items]="participants().sender"
+          [value]="formDoc.get('sender.fullname')?.value"
+          (onTyped)="searchAccounts('sender', $event)"
+          (onSelect)="onSelectAcount('sender', $event)"
+        />
+      </div>
+      <div class="w-full">
+        <mat-form-field>
+          <mat-label>Cargo</mat-label>
+          <input formControlName="jobtitle" matInput />
+        </mat-form-field>
+      </div>
+    </div>
+    <div formGroupName="recipient" class="flex gap-x-2">
+      <div class="w-full">
+        <autocomplete
+          title="Destinatario"
+          [items]="participants().recipient"
+          [value]="formDoc.get('recipient.fullname')?.value"
+          (onTyped)="searchAccounts('recipient', $event)"
+          (onSelect)="onSelectAcount('recipient', $event)"
+        />
+      </div>
+      <div class="w-full">
+        <mat-form-field>
+          <mat-label>Cargo</mat-label>
+          <input formControlName="jobtitle" matInput />
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="py-2">
+      <mat-checkbox
+        [checked]="showViaField()"
+        (change)="showViaField.set($event.checked)"
+      >
+        Habilitar (Via)
+      </mat-checkbox>
+    </div>
+    @if(formDoc.get('via')) {
+    <div formGroupName="via" class="flex gap-x-2">
+      <div class="w-full">
+        <autocomplete
+          title="Via"
+          [items]="participants().via"
+          [value]="formDoc.get('via.fullname')?.value"
+          (onTyped)="searchAccounts('via', $event)"
+          (onSelect)="onSelectAcount('via', $event)"
+        />
+      </div>
+      <div class="w-full">
+        <mat-form-field>
+          <mat-label>Cargo</mat-label>
+          <input formControlName="jobtitle" matInput />
+        </mat-form-field>
+      </div>
+    </div>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close color="warn">Cancelar</button>
+  <button
+    mat-button
+    color="primary"
+    [disabled]="formDoc.invalid"
+    (click)="save()"
+  >
+    Guardar
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,9 @@
+@use '@angular/material' as mat;
+
+// Customize the entire app. Change :root to your selector if you want to scope the styles.
+.examp {
+  @include mat.expansion-overrides((
+    container-background-color: none,
+    // header-collapsed-state-height:12px
+  ));
+}

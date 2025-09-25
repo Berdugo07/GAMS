@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>{{ data ? "Edicion" : "Creacion" }} Tramite Interno</h2>
+<mat-dialog-content>
+  <form [formGroup]="formProcedure" class="pt-2 space-y-2">
+    <div formGroupName="sender" class="flex flex-col sm:flex-row gap-x-3">
+      <div class="flex-1">
+        <autocomplete
+          title="Remitente"
+          [items]="officers().sender"
+          [value]="formProcedure.get('sender.fullname')?.value"
+          (onTyped)="searchAccounts('sender', $event)"
+          (onSelect)="onSelectAcount('sender', $event)"
+          placeholder="Nombre del funcionario"
+        />
+      </div>
+      <div class="flex-1">
+        <mat-form-field>
+          <mat-label>Cargo</mat-label>
+          <input formControlName="jobtitle" matInput />
+        </mat-form-field>
+      </div>
+    </div>
+    <div formGroupName="recipient" class="flex flex-col sm:flex-row gap-x-3">
+      <div class="flex-1">
+        <autocomplete
+          title="Destinatario"
+          [items]="officers().recipient"
+          [value]="formProcedure.get('recipient.fullname')?.value"
+          (onTyped)="searchAccounts('recipient', $event)"
+          (onSelect)="onSelectAcount('recipient', $event)"
+          placeholder="Nombre del funcionario"
+        />
+      </div>
+      <div class="flex-1">
+        <mat-form-field>
+          <mat-label>Cargo</mat-label>
+          <input formControlName="jobtitle" matInput />
+        </mat-form-field>
+      </div>
+    </div>
+    <mat-form-field>
+      <mat-label>Referencia del tramite</mat-label>
+      <textarea formControlName="reference" matInput></textarea>
+    </mat-form-field>
+    <div class="flex flex-col sm:flex-row gap-x-3">
+      <mat-form-field>
+        <mat-label>Cantidad: Hojas / Anexos</mat-label>
+        <input formControlName="numberOfDocuments" matInput />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>CITE</mat-label>
+        <input formControlName="cite" matInput />
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close color="warn">Cancelar</button>
+  <button
+    mat-button
+    color="primary"
+    [disabled]="formProcedure.invalid"
+    (click)="save()"
+  >
+    Guardar
+  </button>
+</mat-dialog-actions>

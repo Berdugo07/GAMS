@@ -1,0 +1,59 @@
+@use "@angular/material" as mat;
+
+.red-light {
+  color-scheme: light;
+  @include mat.theme((
+    color: mat.$red-palette,
+  ));
+}
+
+.red-dark {
+  color-scheme: dark;
+  @include mat.theme((
+    color: mat.$red-palette,
+  ));
+}
+
+.yellow-light {
+  color-scheme: light;
+  @include mat.theme((
+    color: mat.$yellow-palette,
+  ));
+}
+.yellow-dark {
+  color-scheme: dark;
+  @include mat.theme((
+    color: mat.$yellow-palette,
+  ));
+}
+.green-light {
+  color-scheme: light;
+  @include mat.theme((
+    color: mat.$green-palette,
+  ));
+}
+.green-dark {
+  color-scheme: dark;
+  @include mat.theme((
+    color: mat.$green-palette,
+  ));
+}
+.rose-light {
+  color-scheme: light;
+  @include mat.theme((
+    color: mat.$rose-palette,
+  ));
+}
+.rose-dark {
+  color-scheme: dark;
+  @include mat.theme((
+    color: mat.$rose-palette,
+  ));
+}
+
+.azure-dark {
+  color-scheme: dark;
+  @include mat.theme((
+    color: mat.$azure-palette,
+  ));
+}

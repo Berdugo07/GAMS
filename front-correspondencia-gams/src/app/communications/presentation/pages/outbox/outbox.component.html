@@ -1,0 +1,250 @@
+<mat-toolbar>
+  <span>Bandeja de salida</span>
+  <span class="flex-1"></span>
+  @if (canDoAction) {
+  <button
+    mat-icon-button
+    aria-label="Cancel"
+    matTooltip="Cancelar"
+    (click)="cancelSelection()"
+  >
+    <mat-icon>delete</mat-icon>
+  </button>
+  }
+</mat-toolbar>
+
+<div class="p-2 sm:p-4">
+  <div class="flex justify-end mb-2">
+    <div class="w-full sm:w-1/4 h-[54px]">
+      <search-input
+        [initValue]="term()"
+        (onSearch)="search($event)"
+        placeholder="Alterno / Referencia"
+      />
+    </div>
+  </div>
+
+  <table mat-table [dataSource]="dataSource()" multiTemplateDataRows>
+    <ng-container matColumnDef="select">
+      <th mat-header-cell *matHeaderCellDef class="w-8">
+        <mat-checkbox
+          (change)="$event ? toggleAllRows() : null"
+          [checked]="selection.hasValue() && isAllSelected()"
+          [indeterminate]="selection.hasValue() && !isAllSelected()"
+        />
+      </th>
+      <td mat-cell *matCellDef="let row">
+        <mat-checkbox
+          (click)="$event.stopPropagation()"
+          (change)="$event ? selection.toggle(row) : null"
+          [checked]="selection.isSelected(row)"
+        />
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef>Documento</th>
+      <td mat-cell *matCellDef="let item" class="sm:w-32">
+        <div class="flex items-center gap-x-2">
+          @if(item.isOriginal) {
+          <mat-icon style="color: var(--mat-sys-primary)"> task </mat-icon>
+          } @else {
+          <mat-icon style="color: var(--mat-sys-outline)">
+            description
+          </mat-icon>
+          }
+          <div>
+            {{ item.groupLabel }}
+          </div>
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="code">
+      <th mat-header-cell *matHeaderCellDef>Alterno</th>
+      <td mat-cell *matCellDef="let item" class="sm:w-52">
+        {{ item.procedure.code }}
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="reference">
+      <th mat-header-cell *matHeaderCellDef>Referencia</th>
+      <td mat-cell *matCellDef="let item" class="sm:max-w-72">
+        <p class="truncate">{{ item.procedure.reference }}</p>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="recipient">
+      <th mat-header-cell *matHeaderCellDef>Destinatario</th>
+      <td mat-cell *matCellDef="let item" class="sm:max-w-80">
+        {{ item.recipient.fullname | titlecase }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="sentDate">
+      <th mat-header-cell *matHeaderCellDef>Fecha</th>
+      <td mat-cell *matCellDef="let item" class="w-36">
+        {{ item.sentDate | date : "short" }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="time">
+      <th mat-header-cell *matHeaderCellDef>
+        <div class="flex items-center gap-x-1">
+          Expiración
+          <button
+            matIconButton
+            matTooltip="Plazo para que el tramite sea aceptado"
+          >
+            <mat-icon>help</mat-icon>
+          </button>
+        </div>
+      </th>
+      <td mat-cell *matCellDef="let item" class="sm:w-56">
+        @switch (item.status){ @case ('rejected') {
+        <badge severity="danger" message="Rechazado" />
+        } @case ('pending') {
+        <badge
+          severity="warning"
+          [message]="item.remainingTime | humanizeDuration"
+        />
+        } @case ('auto-rejected') {
+        <badge severity="purple" message="Expirado" />
+        } @default {
+        <span>Invalido</span>
+        } }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="expand">
+      <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
+      <td mat-cell *matCellDef="let item" class="w-8">
+        <button
+          matIconButton
+          aria-label="expand row"
+          (click)="toggle(item); $event.stopPropagation()"
+          [class.example-toggle-button-expanded]="isExpanded(item)"
+        >
+          <mat-icon>keyboard_arrow_down</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="options">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let item" class="w-8">
+        <button mat-icon-button [matMenuTriggerFor]="menu">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button
+            mat-menu-item
+            (click)="send(item)"
+            [disabled]="item.status === 'pending' && !item.isOriginal"
+          >
+            <mat-icon>reply</mat-icon>
+            <span>Reenviar</span>
+          </button>
+          <button
+            mat-menu-item
+            (click)="cancelOne(item)"
+            [disabled]="item.status !== 'pending' && item.status !== 'auto-rejected'"
+          >
+            <mat-icon>delete</mat-icon>
+            <span>Cancelar</span>
+          </button>
+         
+        </mat-menu>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="expandedDetail">
+      <td
+        mat-cell
+        *matCellDef="let item"
+        [attr.colspan]="displayedColumns.length"
+      >
+        <div
+          class="detail-wrapper"
+          [class.detail-wrapper-expanded]="isExpanded(item)"
+        >
+          <div class="element-detail">
+            <div class="mb-6 p-3 w-full">
+              <dl class="-my-3 divide-y divide-gray-200 text-sm">
+                <div
+                  class="grid grid-cols-1 gap-1 py-3 sm:grid-cols-3 sm:gap-4"
+                >
+                  <dt class="font-medium">Destinatario:</dt>
+
+                  <dd class="sm:col-span-2">
+                    {{ item.recipient.fullname | titlecase }} -
+                    {{ item.recipient.jobtitle }}
+                  </dd>
+                </div>
+
+                <div
+                  class="grid grid-cols-1 gap-1 py-3 sm:grid-cols-3 sm:gap-4"
+                >
+                  <dt class="font-medium">Instruccion/Proveido:</dt>
+
+                  <dd class="sm:col-span-2">{{ item.reference }}</dd>
+                </div>
+
+                <div
+                  class="grid grid-cols-1 gap-1 py-3 sm:grid-cols-3 sm:gap-4"
+                >
+                  <dt class="font-medium">Fecha envio</dt>
+
+                  <dd class="sm:col-span-2">
+                    {{ item.sentDate | date : "short" }}
+                  </dd>
+                </div>
+
+                @if(item.actionLog){
+                <div
+                  class="grid grid-cols-1 gap-1 py-3 sm:grid-cols-3 sm:gap-4"
+                >
+                  <dt class="font-medium">Descripcion rechazo</dt>
+                  <dd class="sm:col-span-2">
+                    <div class="block">
+                      [{{ item.actionLog.date | date : "short" }}]
+                    </div>
+                    <div class="block">
+                      {{ item.actionLog.fullname | titlecase }}
+                    </div>
+                    <div class="block">
+                      Motivo: {{ item.actionLog.description }}
+                    </div>
+                  </dd>
+                </div>
+                }
+              </dl>
+            </div>
+          </div>
+        </div>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr
+      mat-row
+      *matRowDef="let element; columns: displayedColumns"
+      class="element-row"
+    ></tr>
+    <tr
+      mat-row
+      *matRowDef="let row; columns: ['expandedDetail']"
+      class="detail-row"
+    ></tr>
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell p-3" [attr.colspan]="displayedColumns.length">
+        No se encontraron resultados
+      </td>
+    </tr>
+  </table>
+  <mat-paginator
+    showFirstLastButtons
+    [length]="dataSize()"
+    [pageIndex]="index()"
+    [pageSize]="limit()"
+    [pageSizeOptions]="[10, 20, 30, 50]"
+    (page)="onPageChange($event)"
+  />
+</div>

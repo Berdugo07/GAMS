@@ -1,0 +1,105 @@
+<mat-toolbar>
+  <span>Externos</span>
+  <span class="flex-1"></span>
+  <button mat-icon-button (click)="create()" matTooltip="Crear tramite">
+    <mat-icon>add</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div class="p-2 sm:p-4">
+  <div class="flex justify-end mb-2">
+    <div class="w-full sm:w-1/4 h-[54px]">
+      <search-input
+        [initValue]="term()"
+        (onSearch)="search($event)"
+        placeholder="Correlativo / Referencia"
+      />
+    </div>
+  </div>
+  <table mat-table [dataSource]="datasource()">
+    <ng-container matColumnDef="send">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element" class="w-8">
+        <mat-icon
+          [ngClass]="
+            element.isActionable ? 'text-orange-500' : 'text-green-600'
+          "
+          >outgoing_mail</mat-icon
+        >
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="code">
+      <th mat-header-cell *matHeaderCellDef>Alterno</th>
+      <td mat-cell *matCellDef="let row" [id]="row.id" class="sm:w-48">
+        <a
+          [routerLink]="['../external', row.group, row.id]"
+          routerLinkActive="tonal"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="text-blue-500"
+        >
+          {{ row.code }}
+        </a>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="reference">
+      <th mat-header-cell *matHeaderCellDef>Referencia</th>
+      <td mat-cell *matCellDef="let row" class="sm:max-w-96">
+        <p class="truncate">{{ row.reference }}</p>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="applicant">
+      <th mat-header-cell *matHeaderCellDef>Solicitante</th>
+      <td mat-cell *matCellDef="let row" class="sm:max-w-48">
+        <p class="truncate">{{ row.fullnameApplicant | titlecase }}</p>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="date">
+      <th mat-header-cell *matHeaderCellDef>Fecha</th>
+      <td mat-cell *matCellDef="let row" class="sm:w-32">
+        {{ row.createdAt | date : "short" : "-400" }}
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="options">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let row" class="w-8">
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="menu"
+          aria-label="Options menu"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button
+            mat-menu-item
+            [disabled]="!row.isActionable"
+            (click)="update(row)"
+          >
+            <mat-icon>edit</mat-icon>
+            <span>Editar</span>
+          </button>
+          <button
+            mat-menu-item
+            [disabled]="!row.isActionable"
+            (click)="send(row)"
+          >
+            <mat-icon>send</mat-icon>
+            <span>Remitir </span>
+          </button>
+        </mat-menu>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell p-3"[attr.colspan]="displayedColumns.length">No se encontraron resultados</td>
+    </tr>
+  </table>
+  <mat-paginator
+    showFirstLastButtons
+    [length]="datasize()"
+    [pageIndex]="index()"
+    [pageSize]="limit()"
+    (page)="onPageChange($event)"
+  />
+</div>

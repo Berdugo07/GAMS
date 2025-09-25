@@ -1,0 +1,76 @@
+<div class="example-container" [class.example-is-mobile]="isMobile()">
+  <mat-toolbar class="example-toolbar">
+    <button mat-icon-button (click)="snav.toggle()">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <div>
+      <img src="images/logos/escudo.png" class="w-12" />
+    </div>
+    <span class="flex-1"></span>
+    <div class="flex gap-x-3">
+      <button
+        mat-icon-button
+        matTooltip="Comunicados"
+        routerLink="/home/posts/history"
+      >
+        <mat-icon>campaign</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        matTooltip="Recursos"
+        routerLink="/home/resources"
+      >
+        <mat-icon>apps</mat-icon>
+      </button>
+    </div>
+    <div class="relative ml-4">
+      <button
+        mat-icon-button
+        cdkOverlayOrigin
+        #trigger="cdkOverlayOrigin"
+        (click)="isProfileOpen = !isProfileOpen"
+      >
+        <img
+          src="images/icons/account.png"
+          alt="Profile image"
+          class="w-6 object-cover"
+        />
+      </button>
+    </div>
+  </mat-toolbar>
+  @if(isLoading()){
+  <mat-progress-bar mode="indeterminate" class="loading-bar" />
+  }
+  <ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="trigger"
+    [cdkConnectedOverlayOpen]="isProfileOpen"
+    (overlayOutsideClick)="isProfileOpen = false"
+  >
+    <div class="overlay p-3 sm:w-[400px]" @overlayAnimation>
+      <profile [(isOpen)]="isProfileOpen" />
+    </div>
+  </ng-template>
+
+  <mat-sidenav-container
+    class="example-sidenav-container"
+    [style.marginTop.px]="isMobile() ? 56 : 0"
+  >
+    <mat-sidenav
+      #snav
+      [mode]="isMobile() ? 'over' : 'side'"
+      [fixedInViewport]="isMobile()"
+      fixedTopGap="56"
+      [opened]="true"
+      class="sidenav"
+    >
+      <sidenav-menu [menu]="menu" />
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <div [@routeAnimations]="prepareRoute()" class="h-full">
+        <router-outlet />
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

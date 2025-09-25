@@ -1,0 +1,151 @@
+<mat-toolbar>
+  <span>Documentos</span>
+  <span class="flex-1"></span>
+  <button
+    mat-icon-button
+    aria-label="Filter"
+    cdkOverlayOrigin
+    #menuOverlay="cdkOverlayOrigin"
+    matTooltip="Filtrar"
+    (click)="isFilterOpen = !isFilterOpen"
+  >
+    <mat-icon>filter_alt</mat-icon>
+  </button>
+  <button mat-icon-button (click)="create()" matTooltip="Crear">
+    <mat-icon>add</mat-icon>
+  </button>
+</mat-toolbar>
+
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="menuOverlay"
+  [cdkConnectedOverlayOpen]="isFilterOpen"
+>
+  <div class="overlay p-3 w-full sm:w-[400px]">
+    <div class="flex items-center justify-between px-2 mb-4">
+      <div class="flex flex-col">
+        <span class="text-lg font-medium">Filtro avanzado</span>
+        <span class="text-sm">Ingrese los campos</span>
+      </div>
+      <div>
+        <button mat-icon-button (click)="isFilterOpen = false">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+    <form [formGroup]="filterForm">
+      <div class="flex flex-col">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de documento</mat-label>
+          <mat-select formControlName="type">
+            @for (group of documentTypes; track $index) {
+            <mat-option [value]="group.value">
+              {{ group.label }}
+            </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <year-picker
+          [year]="filterForm.get('year')?.value"
+          (onSelect)="filterForm.get('year')?.setValue($event)"
+        />
+      </div>
+    </form>
+
+    <div class="flex justify-end gap-x-2 mt-2">
+      <button mat-button (click)="reset()">Restablecer</button>
+      <button mat-flat-button (click)="filter()">Buscar</button>
+    </div>
+  </div>
+</ng-template>
+
+<div class="flex justify-end py-2 px-4">
+  <div class="w-full px-2 sm:w-1/4 h-11">
+    <search-input
+      [initValue]="term()"
+      (onSearch)="search($event)"
+      placeholder="Referencia"
+    />
+  </div>
+</div>
+
+<div class="mat-elevation-z8 px-4">
+  <div class="table-container">
+    <table mat-table [dataSource]="datasource()">
+      <ng-container matColumnDef="cite">
+        <th mat-header-cell *matHeaderCellDef>Cite</th>
+        <td mat-cell *matCellDef="let row" class="sm:w-[200px]">
+          <span class="tracking-wide font-semibold">{{ row.cite }}</span>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="reference">
+        <th mat-header-cell *matHeaderCellDef>Referencia</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.reference }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="sender">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.sender.fullname | titlecase }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="procedure">
+        <th mat-header-cell *matHeaderCellDef>Tramite</th>
+        <td mat-cell *matCellDef="let row">
+          @if(row.procedure){
+          {{ row.procedure.code }}
+          } @else {
+          <span class="text-orange-600">SIN ADJUNTAR</span>
+          }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.createdAt | date : "shortDate" }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="options">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row" class="w-8">
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="menu"
+            aria-label="Options menu"
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button
+              mat-menu-item
+              (click)="update(row)"
+              [disabled]="row.procedure"
+            >
+              <mat-icon>edit</mat-icon>
+              <span>Editar</span>
+            </button>
+            <button mat-menu-item (click)="generateTemplate(row)">
+              <mat-icon>article</mat-icon>
+              <span>Plantilla</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell p-2" colspan="6">Sin resultados</td>
+      </tr>
+    </table>
+    <mat-paginator
+      showFirstLastButtons
+      [length]="datasize()"
+      [pageIndex]="index()"
+      [pageSize]="10"
+      (page)="onPageChange($event)"
+    />
+  </div>
+</div>

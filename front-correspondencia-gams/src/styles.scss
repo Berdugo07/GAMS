@@ -1,0 +1,57 @@
+@use "@angular/material" as mat;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  color-scheme: light;
+  @include mat.theme(
+    (
+      color: mat.$azure-palette,
+      typography: Roboto,
+      density: -2,
+    )
+  );
+  .tonal {
+    background-color: var(--mat-sys-primary);
+  }
+  font-size: 15px;
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+}
+
+.overlay {
+  background: var(--mat-sys-surface-container-low);
+  box-shadow: var(--mat-sys-level2);
+  color: var(--mat-sys-on-surface);
+  border-radius: 8px;
+}
+
+:root {
+  @include mat.table-overrides(
+    (
+      row-item-label-text-size: 12px,
+      // row-item-container-height: 30px,
+    )
+  );
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.mdc-notched-outline__notch {
+  border-right: none;
+}
+
+.mat-mdc-row:hover {
+  background-color: var(--mat-sys-surface-container);
+}

@@ -1,0 +1,170 @@
+<mat-toolbar>
+  <button mat-icon-button backButton>
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span class="ml-2">Contenido</span>
+  <span class="flex-1"></span>
+</mat-toolbar>
+
+<div class="p-2 sm:p-4">
+  <div class="flex justify-end mb-2">
+    <div class="w-full sm:w-1/4 h-[54px]">
+      <search-input
+        [initValue]="term()"
+        (onSearch)="search($event)"
+        placeholder="Codigo / Referencia"
+      />
+    </div>
+  </div>
+
+  <div class="mat-elevation-z8">
+    <table mat-table [dataSource]="datasource()" multiTemplateDataRows>
+      <ng-container matColumnDef="document">
+        <th mat-header-cell *matHeaderCellDef>Documento</th>
+        <td mat-cell *matCellDef="let item" class="sm:w-32">
+          <div class="flex items-center gap-x-2">
+            @if(item.isOriginal) {
+            <mat-icon style="color: var(--mat-sys-primary)"> task </mat-icon>
+            } @else {
+            <mat-icon style="color: var(--mat-sys-outline)">
+              description
+            </mat-icon>
+            }
+            <div>
+              {{ item.groupLabel }}
+            </div> 
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="code">
+        <th mat-header-cell *matHeaderCellDef>Codigo</th>
+        <td mat-cell *matCellDef="let item" class="sm:w-[200px]">
+          <a
+            [routerLink]="['../', item.procedure.group, item.procedure.ref]"
+            class="text-blue-500"
+          >
+            {{ item.procedure.code }}
+          </a>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="reference">
+        <th mat-header-cell *matHeaderCellDef>Referencia</th>
+        <td mat-cell *matCellDef="let item" class="sm:max-w-72">
+          <p class="truncate">{{ item.procedure.reference }}</p>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="officer">
+        <th mat-header-cell *matHeaderCellDef>Responsable</th>
+        <td mat-cell *matCellDef="let item" class="sm:w-60">
+          <p class="truncate">{{ item.officer.fullname | titlecase }}</p>
+        </td>
+      </ng-container>
+
+       <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let item" class="w-36">
+          {{ item.createdAt | date : "short" }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="state">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let item" class="w-36">
+          {{ item.state }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef aria-label="row actions">
+          &nbsp;
+        </th>
+        <td mat-cell *matCellDef="let item" class="w-8">
+          <button
+            mat-icon-button
+            aria-label="expand row"
+            (click)="
+              expandedElement = expandedElement === item ? null : item;
+              $event.stopPropagation()
+            "
+          >
+            @if (expandedElement === item) {
+            <mat-icon>keyboard_arrow_up</mat-icon>
+            } @else {
+            <mat-icon>keyboard_arrow_down</mat-icon>
+            }
+          </button>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="options">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let item" class="w-8">
+          <button mat-icon-button (click)="unarchive(item)">
+            <mat-icon>unarchive</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="expandedDetail">
+        <td
+          mat-cell
+          *matCellDef="let item"
+          [attr.colspan]="displayedColumns.length"
+        >
+          <div
+            [@detailExpand]="item == expandedElement ? 'expanded' : 'collapsed'"
+          >
+            <div class="pb-3">
+              <dl>
+                <div class="px-4 py-2 sm:grid sm:grid-cols-4 sm:gap-4 sm:px-0">
+                  <dt class="text-sm/6 font-medium">Responsable:</dt>
+                  <dd class="mt-1 text-sm/6 sm:col-span-3 sm:mt-0">
+                    <div class="block">
+                      {{ item.officer.fullname | titlecase }}
+                    </div>
+                    <div class="block text-xs">
+                      {{ item.officer.jobtitle }}
+                    </div>
+                  </dd>
+                </div>
+                <div class="px-4 py-2 sm:grid sm:grid-cols-4 sm:gap-4 sm:px-0">
+                  <dt class="text-sm/6 font-medium">Motivo:</dt>
+                  <dd class="mt-1 text-sm/6 sm:col-span-3 sm:mt-0">
+                    {{ item.description }}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        class="element-row"
+      ></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: ['expandedDetail']"
+        class="detail-row"
+      ></tr>
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell p-3" colspan="8">Sin resultados</td>
+      </tr>
+    </table>
+    @if (datasize() > limit()) {
+    <mat-paginator
+      showFirstLastButtons
+      [length]="datasize()"
+      [pageIndex]="index()"
+      [pageSize]="10"
+      (page)="onPageChange($event)"
+    />
+    }
+  </div>
+</div>
