@@ -21,7 +21,7 @@ import { NgIf } from '@angular/common';
     MatInputModule,
     MatFormFieldModule,
     ReactiveFormsModule,
-    NgIf, // Añade NgIf a los imports
+    NgIf, 
   ],
   template: `
     <h2 mat-dialog-title>
@@ -47,8 +47,6 @@ import { NgIf } from '@angular/common';
               rows="4"
               placeholder="Ingrese la observación"
             ></textarea>
-            
-            <!-- Usa *ngIf en lugar de @if para compatibilidad -->
             <mat-error *ngIf="observation?.hasError('required')">
               La observación es obligatoria.
             </mat-error>
@@ -90,7 +88,7 @@ export class NotifyDialogComponent {
   send() {
   if (this.notifyForm.valid) {
     const ids = this.data.map(item => item.procedure.code);
-    console.log('Enviando IDs:', ids); // Verifica en la consola del navegador
+    console.log('Enviando IDs:', ids);
     this.dialogRef.close({
       ids: ids,
       observation: this.notifyForm.value.observation,

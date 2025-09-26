@@ -20,15 +20,12 @@ export class NotificationService {
 
   private sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  /**
-   * Envía la notificación de WhatsApp directamente para un trámite (sin reintentos).
-   * Retorna un objeto con success y message (y procedureCode si aplica).
-   */
+
   async logProcedureDetails(
     procedureId: string,
   ): Promise<{ success: boolean; message: string; procedureCode?: string }> {
     try {
-      this.logger.log(`🔔 Procesando notificación directa para trámite ${procedureId}`);
+      this.logger.log(`Procesando notificación directa para trámite ${procedureId}`);
 
       const procedure = await this.procedureModel
         .findById(procedureId)
@@ -41,13 +38,11 @@ export class NotificationService {
         return { success: false, message: 'Trámite no existe' };
       }
 
-      // Normalizamos y leemos campos relevantes
       const status = String((procedure as any).status || '').toLowerCase().trim();
       const group = String((procedure as any).group || '').toLowerCase().trim();
       const applicantType = String((procedure as any).applicant?.type || '').toUpperCase().trim();
       const phone = (procedure as any).applicant?.phone?.toString().trim() || '';
 
-      // Validaciones: debe ser completed, externo, natural y tener teléfono válido
     if (
   status !== 'completed' ||
   group !== 'externalprocedure' ||
@@ -58,7 +53,6 @@ export class NotificationService {
   const reason = `Trámite ${procedure.code} no cumple criterios para notificación (status=${status}, group=${group}, type=${applicantType}, phone=${phone})`;
   this.logger.warn(reason);
 
-  // 🔴 Emitir fallo por socket
   try {
     this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: false });
   } catch (emitErr) {
@@ -68,10 +62,8 @@ export class NotificationService {
   return { success: false, message: reason };
 }
 
-      // Construir mensaje
       const messageText = this.buildMessage(procedure);
 
-      // Enviar
       this.logger.log(`📤 Enviando WhatsApp a ${phone} para trámite ${procedure.code}`);
       const result = await this.whatsappService.sendMessage(phone, messageText);
 
@@ -82,12 +74,12 @@ export class NotificationService {
         return { success: false, message: errMsg };
       }
 
-      this.logger.log(`✅ WhatsApp enviado exitosamente a ${phone} (messageId=${result.messageId || 'unknown'})`);
+      this.logger.log(`WhatsApp enviado exitosamente a ${phone} (messageId=${result.messageId || 'unknown'})`);
       this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: true });
 
       return { success: true, message: 'Notificación enviada correctamente', procedureCode: procedure.code };
     } catch (error: any) {
-      this.logger.error(`❌ Error procesando notificación para ${procedureId}: ${error?.message || error}`);
+      this.logger.error(` Error procesando notificación para ${procedureId}: ${error?.message || error}`);
       try {
         this.socketGateway.emitWhatsAppNotification({ procedureId: procedureId, success: false });
       } catch (emitErr) {
@@ -97,16 +89,12 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Envia una observación a una lista de trámites (bulk).
-   * Devuelve un array con resultados por id.
-   */
+
 async sendObservation(idsOrCodes: string[], observation: string): Promise<ObservationResult[]> {
-  this.logger.log(`📢 Enviando observación a ${idsOrCodes.length} trámites`);
+  this.logger.log(` Enviando observación a ${idsOrCodes.length} trámites`);
 
   const results: ObservationResult[] = [];
 
-  // Guardar notificación general
   await this.notificationModel.create({
     ids: idsOrCodes,
     observation,
@@ -116,17 +104,14 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
   for (const value of idsOrCodes) {
     let procedure: (Procedure & { applicant?: any }) | null = null;
 
-    // Intentar buscar por _id
     if (Types.ObjectId.isValid(value)) {
       procedure = await this.procedureModel.findById(value).populate('applicant').lean().exec() as any;
     }
 
-    // Si no encontró por _id, buscar por code
     if (!procedure) {
       procedure = await this.procedureModel.findOne({ code: value }).populate('applicant').lean().exec() as any;
     }
 
-    // Si sigue sin encontrar, reportar
     if (!procedure) {
       results.push({ id: value, success: false, message: 'Trámite no existe' });
       continue;
@@ -151,7 +136,7 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
       `Código: ${procedure.code}\n` +
       `Referencia: ${procedure.reference || 'No registrada'}\n` +
       `Solicitante: ${(procedure.applicant?.firstname || '')} ${(procedure.applicant?.lastname || '')}\n` +
-      `*OBSERVACIÓN:*\n${observation.toUpperCase()}\n\n` +
+      `OBSERVACIÓN:*\n${observation.toUpperCase()}\n\n` +
       `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`;
 
     try {
@@ -181,10 +166,6 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
   return results;
 }
 
-  /**
-   * Construye el mensaje estándar que será enviado por WhatsApp.
-   * Puedes ajustarlo para añadir description desde archives si lo pasas como argumento.
-   */
   private buildMessage(procedure: any): string {
   const applicant = procedure.applicant || {};
   const nombreCompleto = `${applicant.firstname || ''} ${applicant.middlename || ''} ${applicant.lastname || ''}`.trim();
@@ -192,18 +173,14 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
   return (
     `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
     `-----------------------------------\n` +
-    `Código:* ${procedure.code}\n` +
-    `Referencia:* ${procedure.reference || 'No registrada'}\n` +
-    `Solicitante:* ${nombreCompleto || 'No registrado'}\n` +
+    `Código: ${procedure.code}\n` +
+    `Referencia: ${procedure.reference || 'No registrada'}\n` +
+    `Solicitante: ${nombreCompleto || 'No registrado'}\n` +
     `Estado:* ${procedure.state || procedure.status || 'No disponible'}\n\n` +
     `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`
   );
 }
 
-
-  /**
-   * Verifica elegibilidad (método utilitario).
-   */
   isEligibleForNotification(procedure: any): boolean {
     try {
       const status = String(procedure?.status || '').toLowerCase().trim();

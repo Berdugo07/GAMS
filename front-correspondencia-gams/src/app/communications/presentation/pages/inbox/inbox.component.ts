@@ -205,12 +205,9 @@ dialogRef.afterClosed().subscribe((result: any) => {
   }
 });}
 
-// Método opcional para verificar el estado de WhatsApp
 private checkWhatsAppStatus(messageId: string, procedureCode: string) {
-  // Aquí podrías llamar a tu servicio backend para verificar el estado
   console.log(`Verificando estado del mensaje ${messageId} para el trámite ${procedureCode}`);
   
-  // Ejemplo de cómo mostrar una notificación de estado
   this.toastService.showToast({
     title: 'Estado de WhatsApp',
     description: `Mensaje para ${procedureCode} enviado correctamente`,
@@ -471,10 +468,8 @@ notify(items: Communication[]) {
 
     this.notificationClient.notify(result.ids, result.observation).subscribe({
       next: () => {
-        // Ya no mostramos toast aquí, porque el socket lo hará
       },
       error: () => {
-        // Podrías mostrar un toast SOLO si el request ni siquiera salió al backend
         this.toastService.showToast({
           title: 'Error',
           description: 'No se pudo enviar la notificación al servidor',
@@ -484,8 +479,5 @@ notify(items: Communication[]) {
     });
   });
 }
-
-
-
 }
 

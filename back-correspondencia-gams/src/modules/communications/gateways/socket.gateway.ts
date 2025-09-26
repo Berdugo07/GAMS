@@ -17,12 +17,12 @@ export class SocketGateway {
   constructor(private whatsAppService: WhatsAppBusinessService) {}
 
   async notifyWhatsApp(procedureId: string, message: string, to: string) {
-    let success = false;       // ✅ variable inicializada
+    let success = false;  
     let error: string | null = null;
 
     try {
       const result = await this.whatsAppService.sendMessage(to, message);
-      success = result.success; // ✅ actualizar la variable existente
+      success = result.success; 
     } catch (err) {
       console.error('Error al enviar mensaje:', err);
       error = err.message || 'Error desconocido';

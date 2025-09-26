@@ -81,13 +81,7 @@ async create(account: Account, archiveDto: CreateArchiveDto) {
     );
 
     await this.archiveModel.insertMany(models, { session });
-
-    // ❌ aquí ya no notificamos todavía
-    // await this.notifyCompletedProcedures(items);
-
     await session.commitTransaction();
-
-    // ✅ recién después del commit se dispara la notificación
     await this.notifyCompletedProcedures(items);
 
     return { message: `Archived communications: ${items.length}`, itemIds: items.map((item) => item.id) };

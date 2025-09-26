@@ -89,7 +89,7 @@ export class WhatsAppBusinessService {
     let cleanPhone = phone.replace(/\D/g, '');
 
     if (cleanPhone.length === 8) {
-      cleanPhone = '591' + cleanPhone; // Añade código de país
+      cleanPhone = '591' + cleanPhone; 
     }
 
     return cleanPhone;
