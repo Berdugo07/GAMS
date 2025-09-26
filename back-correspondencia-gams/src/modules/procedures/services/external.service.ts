@@ -79,4 +79,26 @@ export class ExternalService implements ValidProcedureService {
       code: `${prefix}-${institution.sigla}-${year}-${correlative.toString().padStart(6, '0')}`,
     };
   }
+  async addNotification(id: string, observation: string) {
+  const updated = await this.procedureModel.findByIdAndUpdate(
+    id,
+    {
+      $push: {
+        notifications: {
+          observation,
+          status: 'sent',
+        },
+      },
+    },
+    { new: true },
+  );
+
+  if (!updated) {
+    throw new NotFoundException(`Procedure ${id} not found`);
+  }
+
+  return updated;
+}
+
+
 }

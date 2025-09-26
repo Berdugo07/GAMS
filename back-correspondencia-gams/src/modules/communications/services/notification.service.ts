@@ -167,16 +167,20 @@ export class NotificationService {
    * Puedes ajustarlo para añadir description desde archives si lo pasas como argumento.
    */
   private buildMessage(procedure: any): string {
-    const applicant = procedure.applicant || {};
-    const nombreCompleto = `${applicant.firstname || ''} ${applicant.middlename || ''} ${applicant.lastname || ''}`.trim();
+  const applicant = procedure.applicant || {};
+  const nombreCompleto = `${applicant.firstname || ''} ${applicant.middlename || ''} ${applicant.lastname || ''}`.trim();
 
-    return (
-      `Código: ${procedure.code}\n` +
-      `Referencia: ${procedure.reference || 'No registrada'}\n` +
-      `Solicitante: ${nombreCompleto || 'No registrado'}\n` +
-      `Estado: ${procedure.state || procedure.status || 'No disponible'}\n` 
-    );
-  }
+  return (
+    `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
+    `-----------------------------------\n` +
+    `Código:* ${procedure.code}\n` +
+    `Referencia:* ${procedure.reference || 'No registrada'}\n` +
+    `Solicitante:* ${nombreCompleto || 'No registrado'}\n` +
+    `Estado:* ${procedure.state || procedure.status || 'No disponible'}\n\n` +
+    `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`
+  );
+}
+
 
   /**
    * Verifica elegibilidad (método utilitario).

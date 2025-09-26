@@ -488,5 +488,3 @@ notify(items: Communication[]) {
 
 }
 
-
-

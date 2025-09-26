@@ -37,6 +37,14 @@ export class ExternalController {
   create(@GetAccountRequest() account: Account, @Body() procedureDto: CreateExternalProcedureDto) {
     return this.externalService.create(procedureDto, account);
   }
+    @Post(':id/notifications')
+    addNotification(
+      @Param('id', IsMongoidPipe) procedureId: string,
+      @Body('observation') observation: string,
+    ) {
+      return this.externalService.addNotification(procedureId, observation);
+    }
+
 
   @Patch(':id')
   update(@Param('id', IsMongoidPipe) procedureId: string, @Body() procedureDto: UpdateExternalProcedureDto) {

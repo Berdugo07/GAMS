@@ -19,6 +19,7 @@ import { Archive, ArchiveSchema, Communication, CommunicationSchema, Folder, Fol
 import { NotificationService } from './services/notification.service'; 
 import { WhatsAppBusinessService } from './services/whatsapp-business.service';
 import { SocketModule } from '../communications/gateways/socket.module';
+import { Notification, NotificationSchema } from './schemas/notification.schema';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { SocketModule } from '../communications/gateways/socket.module';
       { name: Communication.name, schema: CommunicationSchema },
       { name: Folder.name, schema: FolderSchema },
       { name: Archive.name, schema: ArchiveSchema },
+       { name: Notification.name, schema: NotificationSchema },
     ]),
     AdministrationModule,
     GroupwareModule,

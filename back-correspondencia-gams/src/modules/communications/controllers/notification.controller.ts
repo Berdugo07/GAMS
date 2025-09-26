@@ -10,7 +10,7 @@ import {
 import { NotificationService } from '../services/notification.service';
 import { WhatsAppBusinessService } from '../services/whatsapp-business.service';
 import { ObservationResult } from '../dtos/send-observation.dto';
-
+import { CreateNotificationDto } from '../dtos/create-notification.dto';
 
 @Controller('notifications')
 export class NotificationController {
@@ -77,6 +77,25 @@ async receiveWebhook(@Body() body: { procedureId: string; newState: string }) {
   return { success: true };
 }
 
+@Post('send-observation')
+async sendObservationHandler(
+  @Body() dto: CreateNotificationDto
+): Promise<ObservationResult[]> {
+  console.log('📨 RECIBIENDO PETICIÓN sendObservation', {
+    ids: dto.ids,
+    observation: dto.observation,
+    timestamp: new Date().toISOString()
+  });
+
+  try {
+    const results = await this.notificationService.sendObservation(dto.ids, dto.observation);
+    console.log('✅ RESULTADOS FINALES:', results);
+    return results;
+  } catch (error) {
+    console.error('❌ ERROR EN CONTROLLER:', error);
+    throw error;
+  }
+}
 
 
 }
