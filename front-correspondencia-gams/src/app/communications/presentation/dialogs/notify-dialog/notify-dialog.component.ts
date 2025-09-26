@@ -89,7 +89,7 @@ export class NotifyDialogComponent {
 
   send() {
   if (this.notifyForm.valid) {
-    const ids = this.data.map(item => item.id);
+    const ids = this.data.map(item => item.procedure.code);
     console.log('Enviando IDs:', ids); // Verifica en la consola del navegador
     this.dialogRef.close({
       ids: ids,
