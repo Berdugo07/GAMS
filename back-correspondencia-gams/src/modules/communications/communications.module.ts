@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationController } from './controllers/notification.controller';
+import { ObservationNotification, ObservationNotificationSchema } from './schemas/observation-notification.schema';
 
 import {
   ArchiveController,
@@ -28,7 +29,8 @@ import { Notification, NotificationSchema } from './schemas/notification.schema'
       { name: Communication.name, schema: CommunicationSchema },
       { name: Folder.name, schema: FolderSchema },
       { name: Archive.name, schema: ArchiveSchema },
-       { name: Notification.name, schema: NotificationSchema },
+       { name: ObservationNotification.name, schema: ObservationNotificationSchema }, 
+      { name: Notification.name, schema: NotificationSchema },
     ]),
     AdministrationModule,
     GroupwareModule,

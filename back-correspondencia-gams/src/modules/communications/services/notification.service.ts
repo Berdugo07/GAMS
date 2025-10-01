@@ -6,6 +6,8 @@ import { WhatsAppBusinessService } from './whatsapp-business.service';
 import { ObservationResult } from '../dtos/send-observation.dto';
 import { SocketGateway } from '../gateways/socket.gateway';
 import { Notification } from '../schemas/notification.schema';
+import { ObservationNotification } from '../schemas/observation-notification.schema';
+
 
 @Injectable()
 export class NotificationService {
@@ -14,6 +16,7 @@ export class NotificationService {
   constructor(
     @InjectModel(Procedure.name) private readonly procedureModel: Model<Procedure>,
     @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
+     @InjectModel(ObservationNotification.name) private readonly observationNotificationModel: Model<ObservationNotification>,
     private readonly whatsappService: WhatsAppBusinessService,
     private readonly socketGateway: SocketGateway,
   ) {}
@@ -91,15 +94,9 @@ export class NotificationService {
 
 
 async sendObservation(idsOrCodes: string[], observation: string): Promise<ObservationResult[]> {
-  this.logger.log(` Enviando observación a ${idsOrCodes.length} trámites`);
+  this.logger.log(`📨 Enviando observación a ${idsOrCodes.length} trámites`);
 
   const results: ObservationResult[] = [];
-
-  await this.notificationModel.create({
-    ids: idsOrCodes,
-    observation,
-    createdAt: new Date(),
-  });
 
   for (const value of idsOrCodes) {
     let procedure: (Procedure & { applicant?: any }) | null = null;
@@ -107,11 +104,9 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
     if (Types.ObjectId.isValid(value)) {
       procedure = await this.procedureModel.findById(value).populate('applicant').lean().exec() as any;
     }
-
     if (!procedure) {
       procedure = await this.procedureModel.findOne({ code: value }).populate('applicant').lean().exec() as any;
     }
-
     if (!procedure) {
       results.push({ id: value, success: false, message: 'Trámite no existe' });
       continue;
@@ -131,7 +126,7 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
     }
 
     const messageText =
-     `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
+      `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
       `-----------------------------------\n` +
       `Código: ${procedure.code}\n` +
       `Referencia: ${procedure.reference || 'No registrada'}\n` +
@@ -147,10 +142,20 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
         results.push({ id: value, success: true, message: 'Observación enviada correctamente' });
         this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: true });
 
+        // Guardar en Procedure
         await this.procedureModel.findByIdAndUpdate(
           (procedure as any)._id,
           { $push: { notifications: { observation, status: 'sent', createdAt: new Date() } } }
         );
+
+        // Guardar en colección ObservationNotification
+        await this.observationNotificationModel.create({
+          procedureCode: procedure.code,
+          observation,
+          status: 'sent',
+          phone,
+          applicantName: `${procedure.applicant?.firstname || ''} ${procedure.applicant?.lastname || ''}`.trim(),
+        });
 
       } else {
         results.push({ id: value, success: false, message: 'Error al enviar observación' });
@@ -165,6 +170,7 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
   this.logger.log(`🏁 Envío de observaciones finalizado (${results.length} resultados)`);
   return results;
 }
+
 
   private buildMessage(procedure: any): string {
   const applicant = procedure.applicant || {};

@@ -62,6 +62,12 @@ import {
   SubmissionDialogComponent,
 } from '../../dialogs';
 
+interface ObservationResult {
+  id: string;
+  success: boolean;
+  message: string;
+}
+
 @Component({
   selector: 'app-inbox',
   imports: [
@@ -99,6 +105,7 @@ import {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+
 export default class InboxComponent implements OnInit {
   private dialogRef = inject(MatDialog);
   private destroyRef = inject(DestroyRef);
@@ -456,8 +463,7 @@ private listenToWhatsAppNotifications(): void {
       });
     });
 }
-
-notify(items: Communication[]) {
+  notify(items: Communication[]) {
   const dialogRef = this.dialogRef.open(NotifyDialogComponent, {
     width: '600px',
     data: items,
@@ -467,7 +473,14 @@ notify(items: Communication[]) {
     if (!result) return;
 
     this.notificationClient.notify(result.ids, result.observation).subscribe({
-      next: () => {
+      next: (results) => {
+        results.forEach(res => {
+          this.toastService.showToast({
+            title: res.success ? 'Notificación enviada' : 'Error en notificación',
+            description: `Trámite ${res.id}: ${res.message}`,
+            severity: res.success ? 'success' : 'error'
+          });
+        });
       },
       error: () => {
         this.toastService.showToast({
@@ -479,5 +492,6 @@ notify(items: Communication[]) {
     });
   });
 }
-}
+
+  }
 

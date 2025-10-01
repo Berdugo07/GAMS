@@ -258,7 +258,17 @@ export default class InboxDetailComponent {
         break;
     }
   }
-  
+
+private checkWhatsAppStatus(messageId: string, procedureCode: string, success: boolean) {
+  console.log(`Verificando estado del mensaje ${messageId} para el trámite ${procedureCode}`);
+
+  this.toastService.showToast({
+    title: success ? 'WhatsApp enviado' : 'Error al enviar WhatsApp',
+    description: `Trámite ${procedureCode}`,
+    severity: success ? 'success' : 'error'
+  });
+}
+
 notify(items: Communication[]) {
   const dialogRef = this.dialogRef.open(NotifyDialogComponent, {
     width: '600px',
@@ -267,25 +277,27 @@ notify(items: Communication[]) {
 
   dialogRef.afterClosed().subscribe((result: { ids: string[]; observation: string } | undefined) => {
     if (!result) return;
+      this.notificationClient.notify(result.ids, result.observation).subscribe({
+        next: (results) => {
+          // Para cada resultado devuelto por el backend, mostramos toast de éxito o error
+          results.forEach(res => {
+            this.toastService.showToast({
+              title: res.success ? 'Notificación enviada' : 'Error en notificación',
+              description: `Trámite ${res.id}: ${res.message}`,
+              severity: res.success ? 'success' : 'error'
+            });
+          });
+        },
+        error: () => {
+          // Este toast se dispara solo si falla la petición HTTP (no llega al backend)
+          this.toastService.showToast({
+            title: 'Error',
+            description: 'No se pudo enviar la notificación al servidor',
+            severity: 'error'
+          });
+        }
+      });
 
-    console.log('Datos de notificación:', result);
-
-    this.notificationClient.notify(result.ids, result.observation).subscribe({
-      next: () => {
-        this.toastService.showToast({
-          title: 'Notificación enviada',
-          description: `Se notificaron ${result.ids.length} trámite(s)`,
-          severity: 'success'
-        });
-      },
-      error: () => {
-        this.toastService.showToast({
-          title: 'Error',
-          description: 'No se pudo enviar la notificación',
-          severity: 'error'
-        });
-      }
-    });
   });
 }
 
