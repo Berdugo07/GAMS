@@ -279,7 +279,6 @@ notify(items: Communication[]) {
     if (!result) return;
       this.notificationClient.notify(result.ids, result.observation).subscribe({
         next: (results) => {
-          // Para cada resultado devuelto por el backend, mostramos toast de éxito o error
           results.forEach(res => {
             this.toastService.showToast({
               title: res.success ? 'Notificación enviada' : 'Error en notificación',
@@ -289,7 +288,6 @@ notify(items: Communication[]) {
           });
         },
         error: () => {
-          // Este toast se dispara solo si falla la petición HTTP (no llega al backend)
           this.toastService.showToast({
             title: 'Error',
             description: 'No se pudo enviar la notificación al servidor',

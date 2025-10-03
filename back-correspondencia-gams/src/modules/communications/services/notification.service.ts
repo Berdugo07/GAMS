@@ -131,7 +131,7 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
       `Código: ${procedure.code}\n` +
       `Referencia: ${procedure.reference || 'No registrada'}\n` +
       `Solicitante: ${(procedure.applicant?.firstname || '')} ${(procedure.applicant?.lastname || '')}\n` +
-      `OBSERVACIÓN:*\n${observation.toUpperCase()}\n\n` +
+      `OBSERVACIÓN:\n${observation.toUpperCase()}\n\n` +
       `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`;
 
     try {
@@ -182,7 +182,7 @@ async sendObservation(idsOrCodes: string[], observation: string): Promise<Observ
     `Código: ${procedure.code}\n` +
     `Referencia: ${procedure.reference || 'No registrada'}\n` +
     `Solicitante: ${nombreCompleto || 'No registrado'}\n` +
-    `Estado:* ${procedure.state || procedure.status || 'No disponible'}\n\n` +
+    `Estado: ${procedure.state || procedure.status || 'No disponible'}\n\n` +
     `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`
   );
 }

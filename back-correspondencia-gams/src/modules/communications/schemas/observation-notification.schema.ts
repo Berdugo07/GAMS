@@ -19,6 +19,9 @@ export class ObservationNotification extends Document {
 
   @Prop()
   applicantName?: string;
+
+   @Prop()
+   createdAt: Date;
 }
 
 export const ObservationNotificationSchema =
