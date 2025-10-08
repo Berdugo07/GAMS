@@ -206,16 +206,26 @@
               <mat-icon>archive</mat-icon>
               Archivar
             </button>
-             <button mat-menu-item (click)="notify([row])">
-              <mat-icon>chat</mat-icon>
-              Notificar
-            </button>
+<button mat-menu-item (click)="notify([row])">
+  <mat-icon style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 24 24"
+         width="20"
+         height="20"
+         fill="currentColor"
+         style="display: block;">
+      <path d="M12 2C6.48 2 2 6.06 2 11.08c0 1.8.53 3.5 1.45 4.96L2 22l6.22-1.63A10.3 10.3 0 0 0 12 20c5.52 0 10-4.06 10-9.08S17.52 2 12 2zm0 16.32c-1.42 0-2.79-.35-3.97-1.03l-.28-.16-3.68.96.98-3.51-.18-.29A7.2 7.2 0 0 1 4.78 11c0-3.87 3.24-7 7.22-7 3.97 0 7.22 3.13 7.22 7s-3.25 7-7.22 7z"/>
+      <path d="M17.45 13.26c-.29-.15-1.69-.83-1.95-.93-.26-.1-.45-.15-.63.15-.19.3-.74.92-.9 1.11-.16.19-.33.21-.59.06-.26-.15-1.09-.4-2.08-1.23-.77-.65-1.28-1.45-1.44-1.75-.16-.3-.02-.46.12-.61.12-.12.26-.31.39-.46.13-.15.17-.26.25-.44.08-.18.04-.33-.02-.46-.06-.12-.58-1.36-.8-1.87-.21-.49-.42-.42-.58-.43-.15 0-.33 0-.51 0a.97.97 0 0 0-.7.33c-.24.26-.9.88-.9 2.15s.92 2.4 1.05 2.56c.13.16 1.81 2.77 4.39 3.88.61.26 1.09.43 1.46.55.61.2 1.17.18 1.61.11.49-.07 1.49-.61 1.71-1.19.22-.58.22-1.09.15-1.19-.07-.1-.24-.16-.49-.29z"/>
+    </svg>
+  </mat-icon>
+  <span>Notificar</span>
+</button>
+
             }
-           
           </mat-menu>
         </td>
       </ng-container>
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-header-row *matHeaderRozzwDef="displayedColumns"></tr>
       <tr
         mat-row
         *matRowDef="let row; columns: displayedColumns"

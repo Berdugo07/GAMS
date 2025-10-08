@@ -27,7 +27,6 @@ import { MatPaginatorModule, PageEvent, MatPaginatorIntl } from '@angular/materi
         <strong>{{ data.procedureCode }}</strong>
       </div>
 
-      <!-- Filtro por fecha con botón sencillo -->
       <div class="flex items-center gap-2 mb-4">
         <input
           type="date"
@@ -36,7 +35,6 @@ import { MatPaginatorModule, PageEvent, MatPaginatorIntl } from '@angular/materi
           class="border rounded px-2 py-1"
         />
 
-        <!-- Botón estilo texto/plano -->
         <button
           mat-button
           color="primary"
@@ -99,12 +97,12 @@ export class NotificationHistoryDialogComponent implements OnInit {
 
   notifications: NotificationHistory[] = [];
   page = 1;
-  limit = 4; // Items por página
+  limit = 4; 
   total = 0;
   selectedDate?: string;
 
   constructor() {
-    // Traducir el paginador al español
+    
     this.paginatorIntl.itemsPerPageLabel = 'Ítems por página';
     this.paginatorIntl.nextPageLabel = 'Siguiente';
     this.paginatorIntl.previousPageLabel = 'Anterior';
@@ -140,7 +138,7 @@ export class NotificationHistoryDialogComponent implements OnInit {
   }
 
   applyDateFilter() {
-    this.page = 1; // volver a la primera página al filtrar
+    this.page = 1; 
     this.loadPage(this.page);
   }
 

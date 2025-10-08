@@ -17,9 +17,19 @@
       <button mat-icon-button matTooltip="Archivar" (click)="archive()">
         <mat-icon>archive</mat-icon>
       </button>
-       <button mat-icon-button matTooltip="Notificar" (click)="notify([communication])">
-          <mat-icon>chat</mat-icon>
-        </button>
+      <button mat-icon-button 
+        matTooltip="Notificar por WhatsApp" 
+        (click)="notify([communication])">
+        <svg
+          viewBox="0 0 32 32"
+          class="w-6 h-6" 
+          fill="currentColor" 
+        >
+          <path
+            d="M16.004 3C9.373 3 4 8.372 4 15.003a11.9 11.9 0 0 0 1.61 6.01L4 29l8.18-1.566a12.028 12.028 0 0 0 3.824.592c6.631 0 12.004-5.373 12.004-12.004S22.635 3 16.004 3zm0 21.907a9.93 9.93 0 0 1-5.066-1.395l-.364-.216-4.852.929.924-4.734-.237-.384a9.9 9.9 0 0 1-1.51-5.104C5.899 9.587 10.239 5.25 16.004 5.25c5.767 0 10.104 4.337 10.104 10.104 0 5.766-4.337 10.103-10.104 10.103zm5.69-7.51c-.311-.156-1.839-.907-2.125-1.01-.287-.104-.497-.156-.707.156-.21.311-.812 1.01-.996 1.219-.184.21-.369.234-.68.078-.311-.156-1.316-.484-2.506-1.547-.925-.825-1.55-1.844-1.734-2.155-.183-.311-.019-.479.138-.635.142-.141.311-.369.467-.554.156-.184.207-.312.311-.519.104-.208.052-.39-.026-.547-.078-.156-.707-1.707-.969-2.34-.255-.612-.516-.53-.707-.539-.182-.008-.39-.01-.6-.01a1.157 1.157 0 0 0-.833.39c-.286.312-1.09 1.063-1.09 2.593s1.116 3.004 1.27 3.212c.156.208 2.193 3.348 5.313 4.694.743.321 1.322.513 1.773.656.745.237 1.424.203 1.961.123.598-.09 1.839-.752 2.099-1.479.26-.727.26-1.354.182-1.479-.077-.123-.286-.208-.597-.364z"
+          />
+        </svg>
+      </button>
 
       } @default {} }
     </div>
@@ -39,19 +49,22 @@
     }
     <div class="border border-slate-300 rounded-xl">
       @if (!isLoading()) {
-      <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
-        <mat-tab label="Descripcion">
-          @switch (data()?.procedure?.group) { @case ("ExternalProcedure") {
-          <external-communication [procedure]="external!" />
-          } @case ("InternalProcedure") {
-          <internal-communication [procedure]="internal" />
-          
-          } @default {
-          <p>Type Procedure is not define</p>
-          } }
-        </mat-tab>
-     
-      </mat-tab-group>
+    <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+  <mat-tab label="Descripcion">
+    @switch (data()?.procedure?.group) { 
+      @case ("ExternalProcedure") {
+        <external-communication [procedure]="external!" />
+      } 
+      @case ("InternalProcedure") {
+        <internal-communication [procedure]="internal" />
+      } 
+      @default {
+        <p>Type Procedure is not define</p>
+      } 
+    }
+  </mat-tab>
+</mat-tab-group>
+
       }
     </div>
   </div>

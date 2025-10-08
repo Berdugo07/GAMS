@@ -112,7 +112,7 @@ openHistory() {
 
   this.dialog.open(NotificationHistoryDialogComponent, {
     width: '600px',
-    data: { procedureCode } // ✅ solo mandamos el código
+    data: { procedureCode } 
   });
 }
 
