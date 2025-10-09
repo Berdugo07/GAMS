@@ -11,8 +11,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { NotificationService } from '../services/notification.service';
 import { WhatsAppBusinessService } from '../services/whatsapp-business.service';
-import { ObservationResult } from '../dtos/send-observation.dto';
-import { CreateNotificationDto } from '../dtos/create-notification.dto';
 import { ObservationNotification } from '../schemas/observation-notification.schema';
 import { Procedure } from 'src/modules/procedures/schemas'; 
 import { Query } from '@nestjs/common';
@@ -44,23 +42,21 @@ export class NotificationController {
     }
   }
 
-  @Post('send-observation')
-  async sendObservation(@Body() dto: CreateNotificationDto): Promise<ObservationResult[]> {
-    console.log('📨 RECIBIENDO PETICIÓN sendObservation', {
-      ids: dto.ids,
-      observation: dto.observation,
-      timestamp: new Date().toISOString()
-    });
-    
-    try {
-      const results = await this.notificationService.sendObservation(dto.ids, dto.observation);
-      console.log('✅ RESULTADOS FINALES:', results);
-      return results;
-    } catch (error) {
-      console.error('❌ ERROR EN CONTROLLER:', error);
-      throw error;
-    }
+@Post('send-observation')
+async sendObservation(@Body() dto: { ids: string[]; observation: string }) {
+  console.log('📨 RECIBIENDO PETICIÓN sendObservation', dto);
+  try {
+    const results = await this.notificationService.sendObservation(dto.ids, dto.observation);
+    return { success: true, results };
+  } catch (error) {
+    console.error('❌ ERROR EN CONTROLLER:', error);
+    throw new HttpException(
+      { success: false, message: 'Error enviando observación', details: error?.message || error },
+      400,
+    );
   }
+}
+
 
   @Post(':procedureId')
   async notifyProcedure(@Param('procedureId') procedureId: string) {

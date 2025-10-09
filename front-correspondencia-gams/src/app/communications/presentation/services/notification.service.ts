@@ -10,20 +10,38 @@ export interface NotificationHistory {
   createdAt: string | Date;
 }
 
+export interface ObservationResult {
+  id: string;
+  success: boolean;
+  message: string;
+  state?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
+  private readonly baseUrl = 'http://localhost:3000/api/notifications';
+
   constructor(private http: HttpClient) {}
 
+  /**
+   * Trae todos los mensajes anteriores a la fecha indicada (si existe)
+   * Si no se envía fecha, devuelve los mensajes más recientes
+   */
   getHistory(
     procedureCode: string,
-    page = 1,
-    limit = 4,
-    date?: string 
-  ): Observable<{ items: NotificationHistory[], total: number, page: number, limit: number }> {
-    let url = `http://localhost:3000/api/notifications/history/${procedureCode}?page=${page}&limit=${limit}`;
+    date?: string
+  ): Observable<{ items: NotificationHistory[]; total: number }> {
+    let url = `${this.baseUrl}/history/${procedureCode}`;
     if (date) {
-      url += `&date=${date}`; // 🔹 agregamos el filtro por fecha si existe
+      url += `?date=${encodeURIComponent(date)}`;
     }
-    return this.http.get<{ items: NotificationHistory[], total: number, page: number, limit: number }>(url);
+    return this.http.get<{ items: NotificationHistory[]; total: number }>(url);
+  }
+
+  sendObservation(ids: string[], observation: string): Observable<ObservationResult[]> {
+    return this.http.post<ObservationResult[]>(`${this.baseUrl}/send-observation`, {
+      ids,
+      observation,
+    });
   }
 }

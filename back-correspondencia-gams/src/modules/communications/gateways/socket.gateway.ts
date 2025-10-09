@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { WhatsAppBusinessService } from '../services/whatsapp-business.service';
 
 @WebSocketGateway({
-  cors: { origin: 'http://localhost:4200' }, 
+  cors: { origin: 'http://localhost:4200' },
 })
 @Injectable()
 export class SocketGateway {
@@ -17,12 +17,12 @@ export class SocketGateway {
   constructor(private whatsAppService: WhatsAppBusinessService) {}
 
   async notifyWhatsApp(procedureId: string, message: string, to: string) {
-    let success = false;  
+    let success = false;
     let error: string | null = null;
 
     try {
       const result = await this.whatsAppService.sendMessage(to, message);
-      success = result.success; 
+      success = result.success;
     } catch (err) {
       console.error('Error al enviar mensaje:', err);
       error = err.message || 'Error desconocido';
@@ -30,7 +30,8 @@ export class SocketGateway {
 
     this.server.emit('whatsappNotification', { procedureId, success, error });
   }
-   emitWhatsAppNotification(data: { procedureId: string; success: boolean; error?: string }) {
+
+  emitWhatsAppNotification(data: { procedureId: string; success: boolean; error?: string; message?: string; phone?: string }) {
     this.server.emit('whatsappNotification', data);
   }
 }

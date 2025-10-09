@@ -93,83 +93,92 @@ export class NotificationService {
   }
 
 
-async sendObservation(idsOrCodes: string[], observation: string): Promise<ObservationResult[]> {
-  this.logger.log(`📨 Enviando observación a ${idsOrCodes.length} trámites`);
+ async sendObservation(idsOrCodes: string[], observation: string): Promise<ObservationResult[]> {
+    this.logger.log(`📨 Enviando observación a ${idsOrCodes.length} trámites`);
 
-  const results: ObservationResult[] = [];
+    const results: ObservationResult[] = [];
 
-  for (const value of idsOrCodes) {
-    let procedure: (Procedure & { applicant?: any }) | null = null;
+    for (const value of idsOrCodes) {
+      let procedure: (Procedure & { applicant?: any }) | null = null;
 
-    if (Types.ObjectId.isValid(value)) {
-      procedure = await this.procedureModel.findById(value).populate('applicant').lean().exec() as any;
-    }
-    if (!procedure) {
-      procedure = await this.procedureModel.findOne({ code: value }).populate('applicant').lean().exec() as any;
-    }
-    if (!procedure) {
-      results.push({ id: value, success: false, message: 'Trámite no existe' });
-      continue;
-    }
-
-    const phone = procedure.applicant?.phone?.toString().trim();
-    const applicantType = procedure.applicant?.type?.toUpperCase().trim();
-
-    if (!phone || phone === '000000') {
-      results.push({ id: value, success: false, message: 'Teléfono inválido' });
-      continue;
-    }
-
-    if (!applicantType || applicantType !== 'NATURAL') {
-      results.push({ id: value, success: false, message: 'Tipo de solicitante no válido' });
-      continue;
-    }
-
-    const messageText =
-      `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
-      `-----------------------------------\n` +
-      `Código: ${procedure.code}\n` +
-      `Referencia: ${procedure.reference || 'No registrada'}\n` +
-      `Solicitante: ${(procedure.applicant?.firstname || '')} ${(procedure.applicant?.lastname || '')}\n` +
-      `OBSERVACIÓN:\n${observation.toUpperCase()}\n\n` +
-      `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`;
-
-    try {
-      this.logger.log(`📤 Enviando observación a ${phone} (trámite ${procedure.code})`);
-      const result = await this.whatsappService.sendMessage(phone, messageText);
-
-      if (result.success) {
-        results.push({ id: value, success: true, message: 'Observación enviada correctamente' });
-        this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: true });
-
-        // Guardar en Procedure
-        await this.procedureModel.findByIdAndUpdate(
-          (procedure as any)._id,
-          { $push: { notifications: { observation, status: 'sent', createdAt: new Date() } } }
-        );
-
-        // Guardar en colección ObservationNotification
-        await this.observationNotificationModel.create({
-          procedureCode: procedure.code,
-          observation,
-          status: 'sent',
-          phone,
-          applicantName: `${procedure.applicant?.firstname || ''} ${procedure.applicant?.lastname || ''}`.trim(),
-        });
-
-      } else {
-        results.push({ id: value, success: false, message: 'Error al enviar observación' });
-        this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: false });
+      // Buscar por ObjectId o código
+      if (Types.ObjectId.isValid(value)) {
+        procedure = await this.procedureModel.findById(value).populate('applicant').lean().exec() as any;
+      }
+      if (!procedure) {
+        procedure = await this.procedureModel.findOne({ code: value }).populate('applicant').lean().exec() as any;
       }
 
-    } catch (error: any) {
-      results.push({ id: value, success: false, message: error?.message || 'Error interno' });
+      if (!procedure) {
+        results.push({ id: value, success: false, message: 'Trámite no existe' });
+        continue;
+      }
+
+      const phone = procedure.applicant?.phone?.toString().trim();
+      const applicantType = procedure.applicant?.type?.toUpperCase().trim();
+
+      if (!phone || phone === '000000') {
+        results.push({ id: value, success: false, message: 'Teléfono inválido' });
+        continue;
+      }
+
+      if (!applicantType || applicantType !== 'NATURAL') {
+        results.push({ id: value, success: false, message: 'Tipo de solicitante no válido' });
+        continue;
+      }
+
+      const messageText =
+        `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
+        `-----------------------------------\n` +
+        `Código: ${procedure.code}\n` +
+        `Referencia: ${procedure.reference || 'No registrada'}\n` +
+        `Solicitante: ${(procedure.applicant?.firstname || '')} ${(procedure.applicant?.lastname || '')}\n` +
+        `OBSERVACIÓN:\n${observation.toUpperCase()}\n\n` +
+        `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`;
+
+      try {
+        const result = await this.whatsappService.sendMessage(phone, messageText);
+
+        // Guardar en BD
+        const newNotification = new this.observationNotificationModel({
+          procedureCode: procedure.code,
+          observation,
+          status: result.success ? 'sent' : 'failed',
+          phone,
+          applicantName: `${procedure.applicant?.firstname || ''} ${procedure.applicant?.lastname || ''}`.trim(),
+          messageId: result.messageId,
+        });
+        await newNotification.save();
+
+        // Emitir socket
+        this.socketGateway.emitWhatsAppNotification({
+          procedureId: procedure.code,
+          success: result.success,
+          message: result.success ? 'Mensaje enviado' : 'Error al enviar',
+          phone,
+        });
+
+        results.push({
+          id: value,
+          success: result.success,
+          message: result.success ? '✅ Observación enviada correctamente' : '❌ Error al enviar observación',
+        });
+
+      } catch (error: any) {
+        results.push({ id: value, success: false, message: error?.message || 'Error interno' });
+        this.socketGateway.emitWhatsAppNotification({
+          procedureId: procedure.code,
+          success: false,
+          message: `Error interno: ${error?.message}`,
+          phone,
+        });
+      }
     }
+
+    this.logger.log(`🏁 Envío de observaciones finalizado (${results.length} resultados)`);
+    return results;
   }
 
-  this.logger.log(`🏁 Envío de observaciones finalizado (${results.length} resultados)`);
-  return results;
-}
 
 
   private buildMessage(procedure: any): string {
