@@ -13,7 +13,6 @@ import { NotificationService } from '../services/notification.service';
 import { WhatsAppBusinessService } from '../services/whatsapp-business.service';
 import { ObservationNotification } from '../schemas/observation-notification.schema';
 import { Procedure } from 'src/modules/procedures/schemas'; 
-import { Query } from '@nestjs/common';
 
 @Controller('notifications')
 export class NotificationController {
@@ -84,73 +83,43 @@ async sendObservation(@Body() dto: { ids: string[]; observation: string }) {
     }
     return { success: true };
   }
-@Get('history/:procedureCode')
-async getHistory(
-  @Param('procedureCode') code: string,
-  @Query('date') date?: string,  
-  @Query('page') page = 1,
-  @Query('limit') limit = 4,
-) {
-  try {
-    const filter: any = { procedureCode: code };
+ @Get('history/:procedureCode')
+  async getHistory(@Param('procedureCode') code: string) {
+    try {
+      const filter = { procedureCode: code };
 
-    if (date) {
-      const start = new Date(date);
-      const end = new Date(date);
-      end.setDate(end.getDate() + 1);
-      filter.createdAt = { $gte: start, $lt: end };
-    }
-
-    const [obs, total] = await Promise.all([
-      this.observationNotificationModel
+      // 🔹 Traer TODOS los mensajes (sin límite ni paginación)
+      const obs = await this.observationNotificationModel
         .find(filter)
-        .sort({ createdAt: -1 })
-        .skip((+page - 1) * +limit)
-        .limit(+limit)
+        .sort({ createdAt: 1 }) // más antiguos primero
         .lean()
-        .exec(),
-      this.observationNotificationModel.countDocuments(filter),
-    ]);
-
-        const procedure = await this.procedureModel
-        .findOne({ code })
-        .populate('applicant')
-        .lean<{
-          applicant?: { firstname?: string; lastname?: string };
-          notifications?: { observation: string; status: string; createdAt: Date }[];
-        }>()
         .exec();
 
+      const procedure = await this.procedureModel
+        .findOne({ code })
+        .populate('applicant')
+        .lean<{ applicant?: { firstname?: string; lastname?: string } }>()
+        .exec();
 
-    const procNotifications =
-      procedure?.notifications?.map((n) => ({
-        procedureCode: code,
-        observation: n.observation,
-        status: n.status,
-        createdAt: n.createdAt,
-        applicantName: `${procedure?.applicant?.firstname || ''} ${procedure?.applicant?.lastname || ''}`.trim(),
-      })) || [];
+      const applicantName = `${procedure?.applicant?.firstname || ''} ${
+        procedure?.applicant?.lastname || ''
+      }`.trim();
 
-    const all = [...obs, ...procNotifications].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+      const all = obs.map((o) => ({
+        ...o,
+        applicantName,
+      }));
 
-    return {
-      items: all,
-      total,
-      page: +page,
-      limit: +limit,
-    };
-  } catch (error) {
-    throw new HttpException(
-      {
-        success: false,
-        message: 'Error al obtener historial de notificaciones',
-        details: error.response?.data || error.message,
-      },
-      HttpStatus.BAD_REQUEST
-    );
+      return { items: all, total: all.length };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Error al obtener historial de notificaciones',
+          details: error?.message || error,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
-}
-
 }

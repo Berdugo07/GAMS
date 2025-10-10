@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
-import { NotificationController } from './controllers/notification.controller';
+import { NotificationController } from '../communications/controllers/notification.controller';
 import { ObservationNotification, ObservationNotificationSchema } from './schemas/observation-notification.schema';
 
 import {

@@ -8,25 +8,24 @@ import { SocketGateway } from '../gateways/socket.gateway';
 import { Notification } from '../schemas/notification.schema';
 import { ObservationNotification } from '../schemas/observation-notification.schema';
 
-
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
-
+ 
   constructor(
-    @InjectModel(Procedure.name) private readonly procedureModel: Model<Procedure>,
-    @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
-     @InjectModel(ObservationNotification.name) private readonly observationNotificationModel: Model<ObservationNotification>,
+    @InjectModel(Procedure.name)
+    private readonly procedureModel: Model<Procedure>,
+    @InjectModel(Notification.name)
+    private readonly notificationModel: Model<Notification>,
+    @InjectModel(ObservationNotification.name)
+    private readonly observationNotificationModel: Model<ObservationNotification>,
     private readonly whatsappService: WhatsAppBusinessService,
     private readonly socketGateway: SocketGateway,
   ) {}
 
   private sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-
-  async logProcedureDetails(
-    procedureId: string,
-  ): Promise<{ success: boolean; message: string; procedureCode?: string }> {
+  async logProcedureDetails(procedureId: string): Promise<{ success: boolean; message: string; procedureCode?: string }> {
     try {
       this.logger.log(`Procesando notificación directa para trámite ${procedureId}`);
 
@@ -46,24 +45,18 @@ export class NotificationService {
       const applicantType = String((procedure as any).applicant?.type || '').toUpperCase().trim();
       const phone = (procedure as any).applicant?.phone?.toString().trim() || '';
 
-    if (
-  status !== 'completed' ||
-  group !== 'externalprocedure' ||
-  applicantType !== 'NATURAL' ||
-  !phone ||
-  phone === '000000'
-) {
-  const reason = `Trámite ${procedure.code} no cumple criterios para notificación (status=${status}, group=${group}, type=${applicantType}, phone=${phone})`;
-  this.logger.warn(reason);
-
-  try {
-    this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: false });
-  } catch (emitErr) {
-    this.logger.warn('No se pudo emitir evento por socket: ' + (emitErr as any).message);
-  }
-
-  return { success: false, message: reason };
-}
+      if (
+        status !== 'completed' ||
+        group !== 'externalprocedure' ||
+        applicantType !== 'NATURAL' ||
+        !phone ||
+        phone === '000000'
+      ) {
+        const reason = `Trámite ${procedure.code} no cumple criterios para notificación (status=${status}, group=${group}, type=${applicantType}, phone=${phone})`;
+        this.logger.warn(reason);
+        this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: false });
+        return { success: false, message: reason };
+      }
 
       const messageText = this.buildMessage(procedure);
 
@@ -77,38 +70,31 @@ export class NotificationService {
         return { success: false, message: errMsg };
       }
 
-      this.logger.log(`WhatsApp enviado exitosamente a ${phone} (messageId=${result.messageId || 'unknown'})`);
+      this.logger.log(`WhatsApp enviado exitosamente a ${phone}`);
       this.socketGateway.emitWhatsAppNotification({ procedureId: procedure.code, success: true });
 
       return { success: true, message: 'Notificación enviada correctamente', procedureCode: procedure.code };
     } catch (error: any) {
-      this.logger.error(` Error procesando notificación para ${procedureId}: ${error?.message || error}`);
-      try {
-        this.socketGateway.emitWhatsAppNotification({ procedureId: procedureId, success: false });
-      } catch (emitErr) {
-        this.logger.warn('No se pudo emitir evento por socket: ' + (emitErr as any).message);
-      }
-      return { success: false, message: `Error interno: ${error?.message || error}` };
+      this.logger.error(`Error procesando notificación: ${error?.message}`);
+      this.socketGateway.emitWhatsAppNotification({ procedureId, success: false });
+      return { success: false, message: error?.message || 'Error interno' };
     }
   }
 
-
- async sendObservation(idsOrCodes: string[], observation: string): Promise<ObservationResult[]> {
+  // 🔹 Solo guarda mensajes si el envío fue exitoso
+  async sendObservation(idsOrCodes: string[], observation: string): Promise<ObservationResult[]> {
     this.logger.log(`📨 Enviando observación a ${idsOrCodes.length} trámites`);
-
     const results: ObservationResult[] = [];
 
     for (const value of idsOrCodes) {
-      let procedure: (Procedure & { applicant?: any }) | null = null;
+      let procedure: any = null;
 
-      // Buscar por ObjectId o código
       if (Types.ObjectId.isValid(value)) {
-        procedure = await this.procedureModel.findById(value).populate('applicant').lean().exec() as any;
+        procedure = await this.procedureModel.findById(value).populate('applicant').lean().exec();
       }
       if (!procedure) {
-        procedure = await this.procedureModel.findOne({ code: value }).populate('applicant').lean().exec() as any;
+        procedure = await this.procedureModel.findOne({ code: value }).populate('applicant').lean().exec();
       }
-
       if (!procedure) {
         results.push({ id: value, success: false, message: 'Trámite no existe' });
         continue;
@@ -121,36 +107,31 @@ export class NotificationService {
         results.push({ id: value, success: false, message: 'Teléfono inválido' });
         continue;
       }
-
       if (!applicantType || applicantType !== 'NATURAL') {
         results.push({ id: value, success: false, message: 'Tipo de solicitante no válido' });
         continue;
       }
 
-      const messageText =
-        `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
-        `-----------------------------------\n` +
-        `Código: ${procedure.code}\n` +
-        `Referencia: ${procedure.reference || 'No registrada'}\n` +
-        `Solicitante: ${(procedure.applicant?.firstname || '')} ${(procedure.applicant?.lastname || '')}\n` +
-        `OBSERVACIÓN:\n${observation.toUpperCase()}\n\n` +
-        `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`;
+      const messageText = `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n-----------------------------------\nCódigo: ${procedure.code}\nReferencia: ${procedure.reference || 'No registrada'}\nSolicitante: ${(procedure.applicant?.firstname || '')} ${(procedure.applicant?.lastname || '')}\nOBSERVACIÓN:\n${observation.toUpperCase()}\n\n_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`;
 
       try {
         const result = await this.whatsappService.sendMessage(phone, messageText);
 
-        // Guardar en BD
-        const newNotification = new this.observationNotificationModel({
-          procedureCode: procedure.code,
-          observation,
-          status: result.success ? 'sent' : 'failed',
-          phone,
-          applicantName: `${procedure.applicant?.firstname || ''} ${procedure.applicant?.lastname || ''}`.trim(),
-          messageId: result.messageId,
-        });
-        await newNotification.save();
+        // ✅ Solo guardar si fue enviado con éxito
+        if (result.success) {
+          await this.observationNotificationModel.create({
+            procedureCode: procedure.code,
+            observation,
+            status: 'sent',
+            phone,
+            applicantName: `${procedure.applicant?.firstname || ''} ${procedure.applicant?.lastname || ''}`.trim(),
+            messageId: result.messageId,
+            createdAt: new Date(),
+          });
+        } else {
+          this.logger.warn(`⚠️ Mensaje a ${procedure.code} falló, no se guardará`);
+        }
 
-        // Emitir socket
         this.socketGateway.emitWhatsAppNotification({
           procedureId: procedure.code,
           success: result.success,
@@ -163,15 +144,9 @@ export class NotificationService {
           success: result.success,
           message: result.success ? '✅ Observación enviada correctamente' : '❌ Error al enviar observación',
         });
-
       } catch (error: any) {
+        this.logger.error(`Error enviando observación a ${procedure.code}: ${error.message}`);
         results.push({ id: value, success: false, message: error?.message || 'Error interno' });
-        this.socketGateway.emitWhatsAppNotification({
-          procedureId: procedure.code,
-          success: false,
-          message: `Error interno: ${error?.message}`,
-          phone,
-        });
       }
     }
 
@@ -179,22 +154,20 @@ export class NotificationService {
     return results;
   }
 
-
-
   private buildMessage(procedure: any): string {
-  const applicant = procedure.applicant || {};
-  const nombreCompleto = `${applicant.firstname || ''} ${applicant.middlename || ''} ${applicant.lastname || ''}`.trim();
+    const applicant = procedure.applicant || {};
+    const nombreCompleto = `${applicant.firstname || ''} ${applicant.middlename || ''} ${applicant.lastname || ''}`.trim();
 
-  return (
-    `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
-    `-----------------------------------\n` +
-    `Código: ${procedure.code}\n` +
-    `Referencia: ${procedure.reference || 'No registrada'}\n` +
-    `Solicitante: ${nombreCompleto || 'No registrado'}\n` +
-    `Estado: ${procedure.state || procedure.status || 'No disponible'}\n\n` +
-    `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`
-  );
-}
+    return (
+      `*GOBIERNO AUTÓNOMO MUNICIPAL DE SACABA (GAMS)*\n` +
+      `-----------------------------------\n` +
+      `Código: ${procedure.code}\n` +
+      `Referencia: ${procedure.reference || 'No registrada'}\n` +
+      `Solicitante: ${nombreCompleto || 'No registrado'}\n` +
+      `Estado: ${procedure.state || procedure.status || 'No disponible'}\n\n` +
+      `_Este mensaje fue generado automáticamente por el sistema de notificaciones del GAMS_`
+    );
+  }
 
   isEligibleForNotification(procedure: any): boolean {
     try {

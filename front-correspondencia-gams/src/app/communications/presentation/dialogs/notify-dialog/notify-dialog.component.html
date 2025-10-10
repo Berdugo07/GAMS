@@ -1,32 +1,37 @@
-<h2 mat-dialog-title>💬 Chat de notificación</h2>
-<mat-dialog-content>
-  <div #chatContainer class="chat-container">
-    <div *ngIf="messages.length === 0" class="no-messages">
-      <mat-icon>chat_bubble_outline</mat-icon>
-      <span>Sin mensajes enviados</span>
+<div class="chat-wrapper">
+  <h2 mat-dialog-title>💬 Chat de notificación</h2>
+
+  <mat-dialog-content class="dialog-content">
+    <div #chatContainer class="chat-container">
+      <div *ngIf="messages.length === 0" class="no-messages">
+        <mat-icon>chat_bubble_outline</mat-icon>
+        <span>Sin mensajes enviados</span>
+      </div>
+
+      <div *ngFor="let msg of messages" class="message-success">
+        <div class="message-text">{{ msg.text }}</div>
+        <div class="message-time">{{ msg.timestamp }}</div>
+      </div>
     </div>
+  </mat-dialog-content>
 
-    <div *ngFor="let msg of messages" class="message-success">
-      <div class="message-text">{{ msg.text }}</div>
-      <div class="message-time">{{ msg.timestamp }}</div>
-    </div>
-  </div>
-
-  <form [formGroup]="notifyForm" class="input-area">
-    <textarea 
-      formControlName="observation"
-      placeholder="Escribe una observación..."
-      class="chat-input"
-      rows="1"
-    ></textarea>
-
-    <button 
-      mat-icon-button
-      color="primary"
-      [disabled]="notifyForm.invalid"
-      (click)="send()"
-    >
-      <mat-icon>send</mat-icon>
-    </button>
-  </form>
-</mat-dialog-content>
+  <mat-dialog-actions class="input-area">
+    <form [formGroup]="notifyForm" class="input-form">
+      <textarea
+        #chatInput
+        formControlName="observation"
+        placeholder="Escribe una observación..."
+        class="chat-input"
+        rows="1"
+      ></textarea>
+      <button
+        mat-icon-button
+        color="primary"
+        [disabled]="notifyForm.invalid"
+        (click)="send()"
+      >
+        <mat-icon>send</mat-icon>
+      </button>
+    </form>
+  </mat-dialog-actions>
+</div>
