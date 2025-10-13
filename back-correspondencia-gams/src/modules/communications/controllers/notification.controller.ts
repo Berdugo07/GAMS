@@ -4,6 +4,7 @@ import {
   Body,
   Post, 
   Param, 
+  Req,
   HttpException, 
   HttpStatus 
 } from '@nestjs/common';
@@ -13,6 +14,9 @@ import { NotificationService } from '../services/notification.service';
 import { WhatsAppBusinessService } from '../services/whatsapp-business.service';
 import { ObservationNotification } from '../schemas/observation-notification.schema';
 import { Procedure } from 'src/modules/procedures/schemas'; 
+import { GetUserRequest } from 'src/modules/auth/decorators';
+import { Account } from 'src/modules/administration/schemas';
+import { Request } from 'express';
 
 @Controller('notifications')
 export class NotificationController {
@@ -42,15 +46,29 @@ export class NotificationController {
   }
 
 @Post('send-observation')
-async sendObservation(@Body() dto: { ids: string[]; observation: string }) {
-  console.log('📨 RECIBIENDO PETICIÓN sendObservation', dto);
+async sendObservation(
+  @Body() dto: { ids: string[]; observation: string },
+  @Req() req: Request, // 👈 decorador que te da el usuario logueado
+) {
+  const user = (req as any).user;
+  console.log('📨 Enviando observación como:', user.fullname);
+
   try {
-    const results = await this.notificationService.sendObservation(dto.ids, dto.observation);
+    const results = await this.notificationService.sendObservation(
+      dto.ids,
+      dto.observation,
+      user, // 👈 ahora pasamos el usuario con fullname
+    );
+
     return { success: true, results };
   } catch (error) {
     console.error('❌ ERROR EN CONTROLLER:', error);
     throw new HttpException(
-      { success: false, message: 'Error enviando observación', details: error?.message || error },
+      {
+        success: false,
+        message: 'Error enviando observación',
+        details: error?.message || error,
+      },
       400,
     );
   }

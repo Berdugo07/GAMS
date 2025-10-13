@@ -210,3 +210,95 @@
   background-color: #f7f8fa;
   border-bottom: 1px solid #e0e0e0;
 }
+/* === Nombre del remitente === */
+.sender-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #555;
+  opacity: 0.8;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Opcional: estilo más pequeño y gris */
+.message-header {
+  text-align: right; /* 👈 o left según el tipo de mensaje */
+}
+.sender-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #555;
+  opacity: 0.8;
+  display: block; /* bloque vertical */
+}
+
+.sender-role {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #888;
+  display: block; /* 🔹 Importante: fuerza línea nueva */
+  margin-top: 2px; /* espacio pequeño debajo del nombre */
+  opacity: 0.8;
+}
+/* === Indicador de carga tipo WhatsApp === */
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  gap: 4px;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  background-color: #0d47a1;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* === Encabezado del mensaje (nombre + rol) === */
+.message-header {
+  text-align: right; /* derecha si es mensaje enviado */
+  margin-bottom: 4px;
+}
+
+.sender-info {
+  display: inline-block;
+  text-align: right;
+  background: transparent;
+}
+
+.sender-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0d47a1;
+  display: block;
+}
+
+.sender-role {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #777;
+  display: block;
+  margin-top: 1px;
+  opacity: 0.9;
+}

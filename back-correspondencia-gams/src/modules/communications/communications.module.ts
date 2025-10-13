@@ -21,6 +21,7 @@ import { NotificationService } from './services/notification.service';
 import { WhatsAppBusinessService } from './services/whatsapp-business.service';
 import { SocketModule } from '../communications/gateways/socket.module';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
+import { Role, RoleSchema } from 'src/modules/users/schemas/role.schema'
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { Notification, NotificationSchema } from './schemas/notification.schema'
       { name: Archive.name, schema: ArchiveSchema },
        { name: ObservationNotification.name, schema: ObservationNotificationSchema }, 
       { name: Notification.name, schema: NotificationSchema },
+      { name: Role.name, schema: RoleSchema },
     ]),
     AdministrationModule,
     GroupwareModule,

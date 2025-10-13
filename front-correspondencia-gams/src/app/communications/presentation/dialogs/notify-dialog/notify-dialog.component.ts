@@ -35,8 +35,10 @@ interface ChatMessage {
   text: string;
   success: boolean;
   timestamp: string;
-  applicantName?: string;
+  senderName?: string;
+   senderRole?: string;
 }
+
 
 @Component({
   selector: 'app-notify-dialog',
@@ -121,59 +123,69 @@ export class NotifyDialogComponent
   get observation() {
     return this.notifyForm.get('observation');
   }
+send(): void {
+  if (this.notifyForm.invalid) return;
 
-  send(): void {
-    if (this.notifyForm.invalid) return;
+  const observation = this.notifyForm.value.observation;
+  const ids = this.data.map((item) => item.procedure.code);
 
-    const observation = this.notifyForm.value.observation;
-    const ids = this.data.map((item) => item.procedure.code);
+  // 🔹 Crear un mensaje temporal con ícono de carga
+  const tempMessage: ChatMessage = {
+    text: '', // se mostrará el ícono en lugar del texto
+    success: true,
+    timestamp: new Date().toLocaleString(),
+  };
 
-    // Mostrar mensaje temporal de envío
-    this.messages.push({
-      text: `Enviando observación: "${observation}"...`,
-      success: true,
-      timestamp: new Date().toLocaleString(),
-    });
+  this.messages.push(tempMessage);
+  this.cdr.detectChanges();
+  this.scrollToBottom();
 
-    this.cdr.detectChanges();
-    this.scrollToBottom(); // Scroll para el mensaje que el usuario envía
+  // 🔹 Enviar observación real
+  this.notificationService.sendObservation(ids, observation).subscribe({
+    next: (results: any) => {
+      // ✅ Eliminar el mensaje temporal una vez que se recibe la respuesta
+      const index = this.messages.indexOf(tempMessage);
+      if (index > -1) this.messages.splice(index, 1);
 
-    this.notificationService.sendObservation(ids, observation).subscribe({
-      next: (results: any) => {
-        const arrayResults = Array.isArray(results)
-          ? results
-          : results.items ?? [];
+      const arrayResults = Array.isArray(results) ? results : results.items ?? [];
 
-        arrayResults
-          .filter((res: any) => res.success)
-          .forEach((res: any) => {
-            this.toastService.showToast({
-              title: '✅ Enviado',
-              description: `Trámite ${res.id}: ${res.message}`,
-              severity: 'success',
-            });
-            this.messages.push({
-              text: `Trámite ${res.id}: ${res.message}`,
-              success: true,
-              timestamp: new Date().toLocaleString(),
-            });
-
-            this.cdr.detectChanges();
-            this.scrollToBottom(); // Scroll para las respuestas
+      arrayResults
+        .filter((res: any) => res.success)
+        .forEach((res: any) => {
+          this.toastService.showToast({
+            title: '✅ WhatsApp enviado',
+            description: `Trámite ${res.id}: ${res.message}`,
+            severity: 'success',
           });
-      },
-      error: () => {
-        this.toastService.showToast({
-          title: 'Error interno',
-          description: 'No se pudo enviar la observación',
-          severity: 'error',
-        });
-      },
-    });
 
-    this.notifyForm.reset();
-    this.resetTextareaHeight(); // 🔹 Resetear altura después de enviar
-  }
+          // Agregar solo el mensaje final (confirmación)
+          this.messages.push({
+            text: `Trámite ${res.id}: ${res.message}`,
+            success: true,
+            timestamp: new Date().toLocaleString(),
+          });
+        });
+
+      this.cdr.detectChanges();
+      this.scrollToBottom();
+    },
+    error: () => {
+      const index = this.messages.indexOf(tempMessage);
+      if (index > -1) this.messages.splice(index, 1);
+
+      this.toastService.showToast({
+        title: 'Error interno',
+        description: 'No se pudo enviar la observación',
+        severity: 'error',
+      });
+      this.cdr.detectChanges();
+    },
+  });
+
+  this.notifyForm.reset();
+  this.resetTextareaHeight();
+}
+
 
   close(): void {
     this.dialogRef.close();
@@ -197,7 +209,7 @@ export class NotifyDialogComponent
             text: item.observation ?? item.message ?? '(sin texto)',
             success: true,
             timestamp: new Date(item.createdAt).toLocaleString(),
-            applicantName: item.applicantName ?? '',
+             senderName: item.senderName ?? 'Desconocido',
           }))
           .sort(
             (a, b) =>
