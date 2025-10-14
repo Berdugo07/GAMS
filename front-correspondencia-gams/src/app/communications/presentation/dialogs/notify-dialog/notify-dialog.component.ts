@@ -206,11 +206,13 @@ send(): void {
 
         const newMessages = items
           .map((item: any) => ({
-            text: item.observation ?? item.message ?? '(sin texto)',
-            success: true,
-            timestamp: new Date(item.createdAt).toLocaleString(),
-             senderName: item.senderName ?? 'Desconocido',
-          }))
+        text: item.observation ?? item.message ?? '(sin texto)',
+        success: true,
+        timestamp: new Date(item.createdAt).toLocaleString(),
+        senderName: item.senderName ?? 'Desconocido',
+        senderRole: item.senderRole ?? '', // ✅ Agregado
+      }))
+
           .sort(
             (a, b) =>
               new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
