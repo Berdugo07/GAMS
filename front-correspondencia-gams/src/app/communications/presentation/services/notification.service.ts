@@ -23,10 +23,6 @@ export class NotificationService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Trae todos los mensajes anteriores a la fecha indicada (si existe)
-   * Si no se envía fecha, devuelve los mensajes más recientes
-   */
   getHistory(
     procedureCode: string,
     date?: string

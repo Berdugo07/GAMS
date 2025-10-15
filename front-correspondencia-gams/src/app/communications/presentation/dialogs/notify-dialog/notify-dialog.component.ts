@@ -36,9 +36,8 @@ interface ChatMessage {
   success: boolean;
   timestamp: string;
   senderName?: string;
-   senderRole?: string;
+  senderRole?: string;
 }
-
 
 @Component({
   selector: 'app-notify-dialog',
@@ -48,9 +47,7 @@ interface ChatMessage {
   styleUrls: ['./notify-dialog.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NotifyDialogComponent
-  implements OnInit, OnDestroy, AfterViewInit
-{
+export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly dialogRef = inject(MatDialogRef<NotifyDialogComponent>);
   private readonly notificationService = inject(NotificationService);
@@ -66,7 +63,6 @@ export class NotifyDialogComponent
   @ViewChild('chatContainer') chatContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('chatInput') chatInput!: ElementRef<HTMLTextAreaElement>;
 
-  // 🔹 Control para saber si ya se cargó el historial inicial
   private initialDataLoaded = false;
   private scrollTimeout: any;
 
@@ -83,10 +79,8 @@ export class NotifyDialogComponent
 
     if (!procedureCodes.length) return;
 
-    // 🔹 Cargar todos los mensajes
     procedureCodes.forEach((code) => this.loadAllHistory(code));
 
-    // 🔹 Escucha en tiempo real
     this.socketSub = this.socketService
       .listen('whatsappNotification')
       .subscribe((data: any) => {
@@ -99,106 +93,97 @@ export class NotifyDialogComponent
         this.messages.push(msg);
 
         this.cdr.detectChanges();
-        this.scrollToBottom(); // Scroll para nuevos mensajes en tiempo real
+        this.scrollToBottom();
       });
 
-    // 🔹 Suscribirse a cambios en el textarea para auto-ajustar altura
     this.notifyForm.get('observation')?.valueChanges.subscribe(() => {
       this.adjustTextareaHeight();
     });
   }
 
   ngAfterViewInit(): void {
-    // 🔹 Scroll inicial después de un pequeño delay para asegurar que el DOM esté listo
     this.scheduleInitialScroll();
   }
 
   ngOnDestroy(): void {
     this.socketSub?.unsubscribe();
-    if (this.scrollTimeout) {
-      clearTimeout(this.scrollTimeout);
-    }
+    if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
   }
 
   get observation() {
     return this.notifyForm.get('observation');
   }
-send(): void {
-  if (this.notifyForm.invalid) return;
 
-  const observation = this.notifyForm.value.observation;
-  const ids = this.data.map((item) => item.procedure.code);
+  send(): void {
+    if (this.notifyForm.invalid) return;
 
-  // 🔹 Crear un mensaje temporal con ícono de carga
-  const tempMessage: ChatMessage = {
-    text: '', // se mostrará el ícono en lugar del texto
-    success: true,
-    timestamp: new Date().toLocaleString(),
-  };
+    const observation = this.notifyForm.value.observation;
+    const ids = this.data.map((item) => item.procedure.code);
 
-  this.messages.push(tempMessage);
-  this.cdr.detectChanges();
-  this.scrollToBottom();
+   
+    const tempMessage: ChatMessage = {
+      text: '',
+      success: true,
+      timestamp: new Date().toLocaleString(),
+    };
+    this.messages.push(tempMessage);
+    this.cdr.detectChanges();
+    this.scrollToBottom();
 
-  // 🔹 Enviar observación real
-  this.notificationService.sendObservation(ids, observation).subscribe({
-    next: (results: any) => {
-      // ✅ Eliminar el mensaje temporal una vez que se recibe la respuesta
-      const index = this.messages.indexOf(tempMessage);
-      if (index > -1) this.messages.splice(index, 1);
+    this.notificationService.sendObservation(ids, observation).subscribe({
+      next: (results: ObservationResult[]) => {
+       
+        const index = this.messages.indexOf(tempMessage);
+        if (index > -1) this.messages.splice(index, 1);
 
-      const arrayResults = Array.isArray(results) ? results : results.items ?? [];
-
-      arrayResults
-        .filter((res: any) => res.success)
-        .forEach((res: any) => {
+        results.forEach((res) => {
           this.toastService.showToast({
-            title: '✅ WhatsApp enviado',
+            title: res.success ? '✅ WhatsApp enviado' : '❌ Error',
             description: `Trámite ${res.id}: ${res.message}`,
-            severity: 'success',
+            severity: res.success ? 'success' : 'error',
           });
 
-          // Agregar solo el mensaje final (confirmación)
           this.messages.push({
             text: `Trámite ${res.id}: ${res.message}`,
-            success: true,
+            success: res.success,
             timestamp: new Date().toLocaleString(),
           });
         });
 
-      this.cdr.detectChanges();
-      this.scrollToBottom();
-    },
-    error: () => {
-      const index = this.messages.indexOf(tempMessage);
-      if (index > -1) this.messages.splice(index, 1);
+        this.cdr.detectChanges();
+        this.scrollToBottom();
 
-      this.toastService.showToast({
-        title: 'Error interno',
-        description: 'No se pudo enviar la observación',
-        severity: 'error',
-      });
-      this.cdr.detectChanges();
-    },
-  });
+        this.dialogRef.close({ ids, observation, results });
+      },
+      error: () => {
+        const index = this.messages.indexOf(tempMessage);
+        if (index > -1) this.messages.splice(index, 1);
 
-  this.notifyForm.reset();
-  this.resetTextareaHeight();
-}
+        this.toastService.showToast({
+          title: 'Error interno',
+          description: 'No se pudo enviar la observación',
+          severity: 'error',
+        });
 
+        this.cdr.detectChanges();
+
+        // También cerrar con error
+        this.dialogRef.close({ ids, observation, results: ids.map((id) => ({ id, success: false, message: 'Error interno' })) });
+      },
+    });
+
+    this.notifyForm.reset();
+    this.resetTextareaHeight();
+  }
 
   close(): void {
     this.dialogRef.close();
   }
 
-  /** 🔹 Carga completa del historial */
   private loadAllHistory(code: string) {
     this.notificationService.getHistory(code).subscribe({
       next: (res) => {
-        const items = Array.isArray(res.items)
-          ? res.items
-          : res.items ?? [];
-
+        const items = Array.isArray(res.items) ? res.items : res.items ?? [];
         if (!items.length) {
           this.initialDataLoaded = true;
           return;
@@ -206,23 +191,17 @@ send(): void {
 
         const newMessages = items
           .map((item: any) => ({
-        text: item.observation ?? item.message ?? '(sin texto)',
-        success: true,
-        timestamp: new Date(item.createdAt).toLocaleString(),
-        senderName: item.senderName ?? 'Desconocido',
-        senderRole: item.senderRole ?? '', // ✅ Agregado
-      }))
-
-          .sort(
-            (a, b) =>
-              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
+            text: item.observation ?? item.message ?? '(sin texto)',
+            success: true,
+            timestamp: new Date(item.createdAt).toLocaleString(),
+            senderName: item.senderName ?? 'Desconocido',
+            senderRole: item.senderRole ?? '',
+          }))
+          .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
         this.messages = [...this.messages, ...newMessages];
         this.initialDataLoaded = true;
         this.cdr.detectChanges();
-        
-        // 🔹 Scroll después de cargar el historial
         this.scheduleInitialScroll();
       },
       error: (err) => {
@@ -232,23 +211,15 @@ send(): void {
     });
   }
 
-  /** 🔹 Scroll inicial SIN animación (instantáneo) */
   private scheduleInitialScroll() {
-    if (this.scrollTimeout) {
-      clearTimeout(this.scrollTimeout);
-    }
-
-    this.scrollTimeout = setTimeout(() => {
-      this.scrollToBottomInstant();
-    }, 100); // Pequeño delay para asegurar que el DOM esté renderizado
+    if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
+    this.scrollTimeout = setTimeout(() => this.scrollToBottomInstant(), 100);
   }
 
-  /** 🔹 Scroll instantáneo al final (sin animación) */
   private scrollToBottomInstant() {
     try {
       if (this.chatContainer?.nativeElement) {
         const container = this.chatContainer.nativeElement;
-        // 🔹 IMPORTANTE: Usar scrollTop directamente para que sea instantáneo
         container.scrollTop = container.scrollHeight;
       }
     } catch (err) {
@@ -256,44 +227,30 @@ send(): void {
     }
   }
 
-  /** 🔹 Scroll con animación suave (para mensajes nuevos) */
   private scrollToBottom() {
     try {
       if (this.chatContainer?.nativeElement) {
         const container = this.chatContainer.nativeElement;
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth'
-        });
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       }
     } catch (err) {
       console.warn('Error en scroll automático:', err);
     }
   }
 
-  /** 🔹 Ajustar altura automáticamente del textarea */
   private adjustTextareaHeight() {
     setTimeout(() => {
       if (this.chatInput?.nativeElement) {
         const textarea = this.chatInput.nativeElement;
-        
-        // Reset height to auto para calcular correctamente
         textarea.style.height = 'auto';
-        
-        // Calcular nueva altura (mínimo 1 línea, máximo 4 líneas)
-        const lineHeight = 20; // Aproximadamente 20px por línea
-        const minHeight = 44; // Altura mínima para una línea
-        const maxHeight = 4 * lineHeight + 24; // 4 líneas + padding
-        
-        const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-        
-        // Aplicar nueva altura
-        textarea.style.height = newHeight + 'px';
+        const lineHeight = 20;
+        const minHeight = 44;
+        const maxHeight = 4 * lineHeight + 24;
+        textarea.style.height = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight) + 'px';
       }
     });
   }
 
-  /** 🔹 Resetear altura del textarea */
   private resetTextareaHeight() {
     setTimeout(() => {
       if (this.chatInput?.nativeElement) {

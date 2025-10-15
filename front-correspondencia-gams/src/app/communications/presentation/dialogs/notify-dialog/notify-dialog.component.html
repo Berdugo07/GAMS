@@ -7,8 +7,7 @@
         <mat-icon>chat_bubble_outline</mat-icon>
         <span>Sin mensajes enviados</span>
       </div>
-
-      <!-- 🔹 Bucle de mensajes -->
+      
       <div *ngFor="let msg of messages" class="message-success">
         <div class="message-header" *ngIf="msg.senderName || msg.senderRole">
           <div class="sender-info">
@@ -17,14 +16,11 @@
           </div>
         </div>
 
-
-        <!-- 🔹 Contenido del mensaje -->
         <div class="message-text">
           <ng-container *ngIf="msg.text; else loadingDots">
             {{ msg.text }}
           </ng-container>
 
-          <!-- 🔹 Ícono animado tipo WhatsApp mientras se envía -->
           <ng-template #loadingDots>
             <div class="loading-dots">
               <span></span><span></span><span></span>

@@ -279,6 +279,7 @@ notify(items: Communication[]) {
     if (!result) return;
       this.notificationClient.notify(result.ids, result.observation).subscribe({
         next: (results) => {
+
           results.forEach(res => {
             this.toastService.showToast({
               title: res.success ? 'Notificación enviada' : 'Error en notificación',
@@ -288,6 +289,7 @@ notify(items: Communication[]) {
           });
         },
         error: () => {
+
           this.toastService.showToast({
             title: 'Error',
             description: 'No se pudo enviar la notificación al servidor',

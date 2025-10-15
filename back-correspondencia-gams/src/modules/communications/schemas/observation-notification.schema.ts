@@ -15,7 +15,7 @@ export class ObservationNotification extends Document {
   @Prop() phone?: string;
   @Prop() applicantName?: string;
   @Prop() senderName?: string;
-  @Prop() senderRole?: string; // <-- nuevo
+  @Prop() senderRole?: string; 
   @Prop() messageId?: string;
   @Prop() statusTimestamp?: Date;
   @Prop({ type: Object })

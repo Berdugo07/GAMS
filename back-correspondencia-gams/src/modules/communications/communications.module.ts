@@ -19,7 +19,7 @@ import { GroupwareModule } from '../groupware/groupware.module';
 import { Archive, ArchiveSchema, Communication, CommunicationSchema, Folder, FolderSchema } from './schemas';
 import { NotificationService } from './services/notification.service'; 
 import { WhatsAppBusinessService } from './services/whatsapp-business.service';
-import { SocketModule } from '../communications/gateways/socket.module';
+import { SocketModule } from '../communications/modules/socket.module';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { Role, RoleSchema } from 'src/modules/users/schemas/role.schema'
 
