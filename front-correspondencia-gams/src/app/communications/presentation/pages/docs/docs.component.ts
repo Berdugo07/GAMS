@@ -22,8 +22,8 @@ import { OverlayModule } from '@angular/cdk/overlay';
 
 import { DocDialogComponent } from './doc-dialog/doc-dialog.component';
 import {
-  DocxService,
-  YearPickerComponent,
+ // DocxService,
+  //YearPickerComponent,
   SearchInputComponent,
 } from '../../../../shared';
 import { Doc, DOCUMENT_TYPES } from '../../../domain';
@@ -43,7 +43,7 @@ import { DocService } from '../../services';
     MatSelectModule,
     MatTooltipModule,
     SearchInputComponent,
-    YearPickerComponent,
+    //YearPickerComponent,
     MatPaginatorModule,
   ],
   templateUrl: './docs.component.html',
@@ -52,7 +52,7 @@ import { DocService } from '../../services';
 export default class DocsComponent implements OnInit {
   private dialogRef = inject(MatDialog);
   private docService = inject(DocService);
-  private wordGeneratorService = inject(DocxService);
+  //private wordGeneratorService = inject(DocxService);
 
   readonly documentTypes = [{ value: null, label: 'TODOS' }, ...DOCUMENT_TYPES];
   readonly displayedColumns: string[] = [
@@ -129,7 +129,7 @@ export default class DocsComponent implements OnInit {
   }
 
   generateTemplate(item: Doc) {
-    this.wordGeneratorService.generateDocument(item);
+    //this.wordGeneratorService.generateDocument(item);
   }
 
   search(term: string) {

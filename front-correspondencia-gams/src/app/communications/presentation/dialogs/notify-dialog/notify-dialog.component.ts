@@ -44,7 +44,7 @@ interface ChatMessage {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
   templateUrl: './notify-dialog.component.html',
-  styleUrls: ['./notify-dialog.component.css'],
+  styleUrls: ['./notify-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -66,6 +66,9 @@ export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
   private initialDataLoaded = false;
   private scrollTimeout: any;
 
+  applicantName: string = '';
+  procedureCode: string = '';
+
   constructor() {
     this.notifyForm = this.fb.group({
       observation: ['', [Validators.required, Validators.minLength(4)]],
@@ -73,6 +76,9 @@ export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    const firstItem = this.data[0];'Propietario desconocido';
+    this.procedureCode = firstItem?.procedure?.code ?? '---';
+
     const procedureCodes = this.data
       .map((item) => item.procedure?.code)
       .filter(Boolean);
@@ -120,7 +126,6 @@ export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
     const observation = this.notifyForm.value.observation;
     const ids = this.data.map((item) => item.procedure.code);
 
-   
     const tempMessage: ChatMessage = {
       text: '',
       success: true,
@@ -132,7 +137,6 @@ export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.notificationService.sendObservation(ids, observation).subscribe({
       next: (results: ObservationResult[]) => {
-       
         const index = this.messages.indexOf(tempMessage);
         if (index > -1) this.messages.splice(index, 1);
 
@@ -167,8 +171,15 @@ export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.cdr.detectChanges();
 
-        // También cerrar con error
-        this.dialogRef.close({ ids, observation, results: ids.map((id) => ({ id, success: false, message: 'Error interno' })) });
+        this.dialogRef.close({
+          ids,
+          observation,
+          results: ids.map((id) => ({
+            id,
+            success: false,
+            message: 'Error interno',
+          })),
+        });
       },
     });
 
@@ -197,7 +208,10 @@ export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
             senderName: item.senderName ?? 'Desconocido',
             senderRole: item.senderRole ?? '',
           }))
-          .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          .sort(
+            (a, b) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
 
         this.messages = [...this.messages, ...newMessages];
         this.initialDataLoaded = true;
@@ -246,7 +260,8 @@ export class NotifyDialogComponent implements OnInit, OnDestroy, AfterViewInit {
         const lineHeight = 20;
         const minHeight = 44;
         const maxHeight = 4 * lineHeight + 24;
-        textarea.style.height = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight) + 'px';
+        textarea.style.height =
+          Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight) + 'px';
       }
     });
   }
